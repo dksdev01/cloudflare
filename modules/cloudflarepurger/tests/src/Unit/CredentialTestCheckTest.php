@@ -1,15 +1,14 @@
 <?php
 
-namespace Drupal\cloudflarepurger\Tests\DiagnosticCheck;
+namespace Drupal\Tests\cloudflarepurger\Unit;
 
 use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
-use Drupal\cloudflarepurger\DiagnosticCheckTestBase;
 use Drupal\cloudflarepurger\Plugin\Purge\DiagnosticCheck\CredentialCheck;
 
 /**
  * Tests that purge_requirements() passes on our diagnostic checks.
  *
- * @group cloudflare
+ * @group cloudflarepurger
  */
 class CredentialTestCheckTest extends DiagnosticCheckTestBase {
 

@@ -1,17 +1,18 @@
 <?php
 
-namespace Drupal\cloudflare\Tests;
+namespace Drupal\Tests\cloudflare\Functional;
 
 use Drupal\cloudflare_form_tester\Mocks\ComposerDependenciesCheckMock;
 use Drupal\Core\Url;
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 
 /**
- * Tests \Drupal\purge_ui\Form\ComposerDependencyTest.
+ * Tests \Drupal\cloudflare\Form\SettingsForm.
  *
  * @group cloudflare
  */
-class ComposerDependencyTest extends WebTestBase {
+class ComposerDependencyTest extends BrowserTestBase {
+
   public static $modules = ['cloudflare', 'cloudflare_form_tester', 'ctools'];
 
   /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\cloudflarepurger;
+namespace Drupal\Tests\cloudflarepurger\Unit;
 
 use Drupal\Tests\UnitTestCase;
 use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
@@ -10,17 +10,8 @@ use Drupal\Core\State\State as CoreState;
 use Drupal\cloudflare\State as CloudFlareState;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 
-/*
- * @todo Relocate this to the tests directory.  Currently core's run tests
- * auto-detects this as a class with tests to run.  Moving the file outside
- * of tests was the only workaround.
- */
-
-
 /**
  * Tests that purge_requirements() passes on our diagnostic checks.
- *
- * @group cloudflare
  */
 abstract class DiagnosticCheckTestBase extends UnitTestCase {
 

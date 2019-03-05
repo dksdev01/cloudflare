@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\cloudflare\Tests;
+namespace Drupal\Tests\cloudflare\Functional;
 
 use Drupal\cloudflare_form_tester\Mocks\ComposerDependenciesCheckMock;
 use Drupal\Core\Url;
-use Drupal\simpletest\WebTestBase;
 use Drupal\cloudflare_form_tester\Mocks\ZoneMock;
+use Drupal\Tests\BrowserTestBase;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Response;
 
@@ -14,7 +14,8 @@ use GuzzleHttp\Psr7\Response;
  *
  * @group cloudflare
  */
-class CloudFlareAdminSettingsInvalidFormTest extends WebTestBase {
+class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
+
   public static $modules = ['cloudflare', 'ctools'];
 
   /**

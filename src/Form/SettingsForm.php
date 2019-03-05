@@ -11,7 +11,7 @@ use Drupal\Core\Url;
 use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareZoneInterface;
 use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
-use Egulias\EmailValidator\EmailValidator;
+use Drupal\Component\Utility\EmailValidator;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use CloudFlarePhpSdk\Exceptions\CloudFlareException;

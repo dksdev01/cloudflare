@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\cloudflare\Tests;
+namespace Drupal\Tests\cloudflare\Unit;
 
 use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
 use DateTime;
@@ -30,9 +30,9 @@ class StateTest extends UnitTestCase {
     // Configure the stub.
     $timestamp_stub->method('now')
       ->will($this->onConsecutiveCalls(
-        new DateTime('2010-02-01 00:00:00'),
-        new DateTime('2010-02-01 00:01:00'),
-        new DateTime('2010-02-01 00:02:00')
+        new \DateTime('2010-02-01 00:00:00'),
+        new \DateTime('2010-02-01 00:01:00'),
+        new \DateTime('2010-02-01 00:02:00')
       ));
 
     $drupal_state_service = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());

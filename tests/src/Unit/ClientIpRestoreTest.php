@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\cloudflare\Tests;
+namespace Drupal\Tests\cloudflare\Unit;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -74,7 +74,7 @@ class ClientIpRestoreTest extends UnitTestCase {
     else {
       $logger->expects($this->once())
         ->method('warning')
-        ->with($expected_message);
+        ->with((string) $expected_message);
     }
 
     $config_factory = $this->getMock('\Drupal\Core\Config\ConfigFactoryInterface');

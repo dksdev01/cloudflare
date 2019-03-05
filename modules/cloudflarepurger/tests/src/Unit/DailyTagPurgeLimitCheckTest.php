@@ -1,17 +1,16 @@
 <?php
 
-namespace Drupal\cloudflarepurger\Tests\DiagnosticCheck;
+namespace Drupal\Tests\cloudflarepurger\Unit;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
 use Drupal\cloudflare\State;
-use Drupal\cloudflarepurger\DiagnosticCheckTestBase;
 use Drupal\cloudflarepurger\Plugin\Purge\DiagnosticCheck\DailyTagPurgeLimitCheck;
 
 /**
  * Tests that purge_requirements() passes on our diagnostic checks.
  *
- * @group cloudflare
+ * @group cloudflarepurger
  */
 class DailyTagPurgeLimitCheckTest extends DiagnosticCheckTestBase {
 

@@ -1,16 +1,15 @@
 <?php
 
-namespace Drupal\cloudflarepurger\Tests\DiagnosticCheck;
+namespace Drupal\Tests\cloudflarepurger\Unit;
 
 use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
 use Drupal\cloudflare\State;
 use Drupal\cloudflarepurger\Plugin\Purge\DiagnosticCheck\ApiRateLimitCheck;
-use Drupal\cloudflarepurger\DiagnosticCheckTestBase;
 
 /**
  * Tests that purge_requirements() passes on our diagnostic checks.
  *
- * @group cloudflare
+ * @group cloudflarepurger
  *
  * @covers \Drupal\cloudflarepurger\Plugin\Purge\DiagnosticCheck\ApiRateLimitCheck
  */
