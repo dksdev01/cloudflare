@@ -35,7 +35,7 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
   public function setUp() {
     parent::setUp();
 
-    $this->adminUser = $this->drupalCreateUser(['access administration pages']);
+    $this->adminUser = $this->drupalCreateUser(['administer cloudflare']);
     $this->route = Url::fromRoute('cloudflare.admin_settings_form');
     $this->drupalLogin($this->adminUser);
     ZoneMock::mockAssertValidCredentials(TRUE);

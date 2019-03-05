@@ -48,3 +48,26 @@ function cloudflare_requirements($phase) {
 function cloudflare_update_8001(&$sandbox) {
   \Drupal::service('module_installer')->install(['ctools']);
 }
+
+/**
+ * Grants the 'administer cloudflare' permission to eligible roles.
+ */
+function cloudflare_update_8002(&$sandbox) {
+
+  try {
+    /* @var $user_role_storage \Drupal\user\RoleStorageInterface */
+    $user_role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+
+    /* @var $roles array|\Drupal\user\RoleInterface[] */
+    $roles = $user_role_storage->loadMultiple();
+
+    foreach ($roles as $role) {
+      if ($role->hasPermission('access administration pages')) {
+        $role->grantPermission('administer cloudflare')->save();
+      }
+    }
+  }
+  catch(EntityStorageException|InvalidPluginDefinitionException|PluginNotFoundException $e) {
+    throw new UpdateException('Update 8002 failed with the following: ' . $e->getMessage(), $e->getCode(), $e);
+  }
+}
