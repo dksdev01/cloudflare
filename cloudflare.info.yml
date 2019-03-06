@@ -6,4 +6,4 @@ package: Web services
 configure: cloudflare.admin_settings_form
 
 dependencies:
-  - ctools
+  - ctools:ctools
