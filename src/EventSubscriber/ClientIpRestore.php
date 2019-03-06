@@ -139,6 +139,10 @@ class ClientIpRestore implements EventSubscriberInterface {
       return;
     }
 
+    // As the changed remote address will make it impossible to determine
+    // a trusted proxy, we need to make sure we set the right protocal as well.
+    // @see \Symfony\Component\HttpFoundation\Request::isSecure()
+    $event->getRequest()->server->set('HTTPS', $event->getRequest()->isSecure() ? 'on' : 'off');
     $event->getRequest()->server->set('REMOTE_ADDR', $cf_connecting_ip);
     $event->getRequest()->overrideGlobals();
   }
