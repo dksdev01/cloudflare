@@ -11,7 +11,6 @@ use Drupal\Core\Url;
 use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareZoneInterface;
 use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
-use Drupal\Component\Utility\EmailValidator;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use CloudFlarePhpSdk\Exceptions\CloudFlareException;
@@ -28,7 +27,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
   /**
    * Email validator class.
    *
-   * @var \Egulias\EmailValidator\EmailValidator
+   * @var \Drupal\Component\Utility\EmailValidator|\Egulias\EmailValidator\EmailValidator
    */
   protected $emailValidator;
 
@@ -83,13 +82,23 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
     $has_zone_mock = $container->has('cloudflare.zonemock');
     $has_composer_mock = $container->has('cloudflare.composer_dependency_checkmock');
 
+    // Drupal\Component\Utility\EmailValidator introduced in 8.7.x. Adding
+    // condition here for backward combatilibilty.
+    // @see https://www.drupal.org/i/3038799
+    if (class_exists('\Drupal\Component\Utility\EmailValidator')) {
+      $email_validator = new \Drupal\Component\Utility\EmailValidator();
+    }
+    else {
+      $email_validator = new \Egulias\EmailValidator\EmailValidator();
+    }
+
     return new static(
       $container->get('config.factory'),
       $container->get('cloudflare.state'),
 
       $has_zone_mock ? $container->get('cloudflare.zonemock') : $container->get('cloudflare.zone'),
       $container->get('logger.factory')->get('cloudflare'),
-      new EmailValidator(),
+      $email_validator,
       $has_composer_mock ? $container->get('cloudflare.composer_dependency_checkmock') : $container->get('cloudflare.composer_dependency_check')
     );
   }
@@ -105,12 +114,12 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
    *   ZoneApi instance for accessing api.
    * @param \Psr\Log\LoggerInterface $logger
    *   A logger instance.
-   * @param \Egulias\EmailValidator\EmailValidator $email_validator
+   * @param \Drupal\Component\Utility\EmailValidator|\Egulias\EmailValidator\EmailValidator $email_validator
    *   The email validator.
    * @param \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface $check_interface
    *   Checks if composer dependencies are met.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, CloudFlareStateInterface $state, CloudFlareZoneInterface $zone_api, LoggerInterface $logger, EmailValidator $email_validator, CloudFlareComposerDependenciesCheckInterface $check_interface) {
+  public function __construct(ConfigFactoryInterface $config_factory, CloudFlareStateInterface $state, CloudFlareZoneInterface $zone_api, LoggerInterface $logger, $email_validator, CloudFlareComposerDependenciesCheckInterface $check_interface) {
     $this->configFactory = $config_factory;
     $this->state = $state;
     $this->zoneApi = $zone_api;
