@@ -67,7 +67,13 @@ function cloudflare_update_8002(&$sandbox) {
       }
     }
   }
-  catch(EntityStorageException|InvalidPluginDefinitionException|PluginNotFoundException $e) {
+  catch(EntityStorageException $e) {
+    throw new UpdateException('Update 8002 failed with the following: ' . $e->getMessage(), $e->getCode(), $e);
+  }
+  catch(InvalidPluginDefinitionException $e) {
+    throw new UpdateException('Update 8002 failed with the following: ' . $e->getMessage(), $e->getCode(), $e);
+  }
+  catch(PluginNotFoundException $e) {
     throw new UpdateException('Update 8002 failed with the following: ' . $e->getMessage(), $e->getCode(), $e);
   }
 }
