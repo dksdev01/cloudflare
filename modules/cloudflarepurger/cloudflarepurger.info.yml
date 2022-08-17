@@ -1,7 +1,7 @@
 name: CloudFlare Purger
 type: module
 description: CloudFlare CDN integration.
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^8 || ^9 || ^10
 package: Purge - reverse proxies & CDNs
 configure: cloudflare.admin_settings_form
 dependencies:

@@ -1,7 +1,7 @@
 name: CloudFlare Form Tester
 type: module
 description: Adds replacement services used for testing CloudFlare forms
-core_version_requirement: ^8 || ^9
+core_version_requirement: ^8 || ^9 || ^10
 package: Web services
 
 dependencies:

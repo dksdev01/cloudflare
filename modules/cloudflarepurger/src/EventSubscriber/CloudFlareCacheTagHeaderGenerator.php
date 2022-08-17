@@ -2,8 +2,8 @@
 
 namespace Drupal\cloudflarepurger\EventSubscriber;
 
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Drupal\Core\Cache\CacheableResponseInterface;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -33,10 +33,10 @@ class CloudFlareCacheTagHeaderGenerator implements EventSubscriberInterface {
   /**
    * Generates a 'Cache-Tag' header in the format expected by CloudFlare.
    *
-   * @param \Symfony\Component\HttpKernel\Event\FilterResponseEvent $event
+   * @param \Symfony\Component\HttpKernel\Event\ResponseEvent $event
    *   The event to process.
    */
-  public function onResponse(FilterResponseEvent $event) {
+  public function onResponse(ResponseEvent $event) {
     if (!$event->isMasterRequest()) {
       return;
     }
