@@ -14,6 +14,7 @@ use Drupal\purge\Plugin\Purge\Purger\PurgerBase;
 use Drupal\purge\Plugin\Purge\Purger\PurgerInterface;
 use Drupal\purge\Plugin\Purge\Invalidation\InvalidationInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * CloudFlare purger.
@@ -37,6 +38,13 @@ class CloudFlarePurger extends PurgerBase implements PurgerInterface {
    * @var \Drupal\Core\Config\Config
    */
   protected $config;
+
+  /**
+   * A logger instance.
+   *
+   * @var \Psr\Log\LoggerInterface|null
+   */
+  protected ?LoggerInterface $logger;
 
   /**
    * Tracks rate limits associated with CloudFlare Api.
@@ -69,6 +77,7 @@ class CloudFlarePurger extends PurgerBase implements PurgerInterface {
       $plugin_definition,
       $container->get('config.factory'),
       $container->get('cloudflare.state'),
+      $container->get('logger.factory')->get('cloudflare'),
       $container->get('cloudflare.composer_dependency_check')
     );
   }
@@ -88,11 +97,10 @@ class CloudFlarePurger extends PurgerBase implements PurgerInterface {
    *   Tracks limits associated with CloudFlare Api.
    * @param \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface $checker
    *   Tests that composer dependencies are met.
-   *
-   * @throws \LogicException
-   *   Thrown if $configuration['id'] is missing, see Purger\Service::createId.
+   * @param \Psr\Log\LoggerInterface|null $logger
+   *   A logger instance.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ConfigFactoryInterface $config_factory, CloudFlareStateInterface $state, CloudFlareComposerDependenciesCheckInterface $checker) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, ConfigFactoryInterface $config_factory, CloudFlareStateInterface $state, CloudFlareComposerDependenciesCheckInterface $checker, LoggerInterface $logger = NULL) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $this->config = $config_factory->get('cloudflare.settings');
