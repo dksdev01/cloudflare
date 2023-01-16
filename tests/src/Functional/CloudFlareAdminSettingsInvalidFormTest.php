@@ -16,7 +16,15 @@ use GuzzleHttp\Psr7\Response;
  */
 class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
 
+  /**
+   * {@inheritdoc}
+   */
   public static $modules = ['cloudflare', 'ctools'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * An admin user that has been setup for the test.
@@ -28,7 +36,7 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
   /**
    * Route providing the main configuration form of the cloudflare module.
    *
-   * @var string|\Drupal\Core\Url
+   * @var string
    */
   protected $route = 'cloudflare.admin_settings_form';
 
@@ -39,7 +47,7 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
     parent::setUp();
 
     $this->adminUser = $this->drupalCreateUser(['administer cloudflare']);
-    $this->route = Url::fromRoute('cloudflare.admin_settings_form');
+    $this->formUrl = Url::fromRoute($this->route);
     ComposerDependenciesCheckMock::mockComposerDependenciesMet(TRUE);
   }
 
@@ -48,7 +56,7 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
    */
   public function testConfigFormDisplay() {
     $this->drupalLogin($this->adminUser);
-    $this->drupalGet($this->route);
+    $this->drupalGet($this->formUrl);
     $this->assertSession()->pageTextContains('This will help suppress log warnings regarding requests bypassing CloudFlare', 'Helper Text');
     $this->assertSession()->fieldExists('apikey');
     $this->assertSession()->fieldExists('email');
@@ -63,7 +71,7 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
     // @todo troubleshoot why testing the route as an anonymous user
     // throws a 500 code for travis CI.
     $this->drupalLogin($this->adminUser);
-    $this->drupalGet($this->route);
+    $this->drupalGet($this->formUrl);
     $this->assertSession()->statusCodeEquals(200);
   }
 
@@ -90,7 +98,8 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
       'apikey' => '68ow48650j63zfzx1w9jd29cr367u0ezb6a4g',
       'email' => 'test@test.com',
     ];
-    $this->drupalPostForm($this->route, $edit, t('Next'));
+    $this->drupalGet($this->formUrl);
+    $this->submitForm($edit, 'Next');
     $this->assertSession()->addressEquals('/admin/config/services/cloudflare');
   }
 
@@ -99,28 +108,28 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
    */
   public function testUpperCaseInvalidCredentials() {
     ZoneMock::mockAssertValidCredentials(TRUE);
-    ComposerDependenciesCheckMock::mockComposerDependenciesMet(TRUE);
     $edit = [
       'apikey' => 'fDK5M9sf51x6CEAspHSUYM4vt40m5XC2T6i1K',
       'email' => 'test@test.com',
     ];
     $this->drupalLogin($this->adminUser);
-    $this->drupalPostForm($this->route, $edit, t('Next'));
+    $this->drupalGet($this->formUrl);
+    $this->submitForm($edit, 'Next');
     $this->assertSession()->pageTextContains('Invalid Api Key: Key can only contain lowercase or numerical characters.');
   }
 
   /**
-   * Test posting an invalid host to the form.
+   * Test invalid key length.
    */
   public function testInvalidKeyLength() {
     ZoneMock::mockAssertValidCredentials(TRUE);
-    ComposerDependenciesCheckMock::mockComposerDependenciesMet(TRUE);
     $edit = [
       'apikey' => '68ow48650j63zfzx1w9jd29cr367u0ezb6a4g0',
       'email' => 'test@test.com',
     ];
     $this->drupalLogin($this->adminUser);
-    $this->drupalPostForm($this->route, $edit, t('Next'));
+    $this->drupalGet($this->formUrl);
+    $this->submitForm($edit, 'Next');
     $this->assertSession()->pageTextContains('Invalid Api Key: Key should be 37 chars long.');
   }
 
@@ -135,7 +144,8 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
       'email' => 'test@test.com',
     ];
     $this->drupalLogin($this->adminUser);
-    $this->drupalPostForm($this->route, $edit, t('Next'));
+    $this->drupalGet($this->formUrl);
+    $this->submitForm($edit, 'Next');
     $this->assertSession()->pageTextContains('Invalid Api Key: Key can only contain alphanumeric characters.');
   }
 

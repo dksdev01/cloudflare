@@ -10,8 +10,8 @@ use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
  * Tests functionality of CloudFlareState object.
@@ -23,6 +23,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ClientIpRestoreTest extends UnitTestCase {
   use StringTranslationTrait;
 
+  /**
+   * Container.
+   *
+   * @var \Drupal\Core\DependencyInjection\ContainerBuilder
+   */
   protected $container;
 
   /**
@@ -84,8 +89,14 @@ class ClientIpRestoreTest extends UnitTestCase {
 
     // Create a map of arguments to return values.
     $map = [
-      [ClientIpRestore::CLOUDFLARE_BYPASS_HOST, $bypass_host],
-      [ClientIpRestore::CLOUDFLARE_CLIENT_IP_RESTORE_ENABLED, $client_ip_restore_enabled],
+      [
+        ClientIpRestore::CLOUDFLARE_BYPASS_HOST,
+        $bypass_host
+      ],
+      [
+        ClientIpRestore::CLOUDFLARE_CLIENT_IP_RESTORE_ENABLED,
+        $client_ip_restore_enabled,
+      ],
     ];
     $config->expects($this->atLeastOnce())
       ->method('get')
@@ -139,7 +150,7 @@ class ClientIpRestoreTest extends UnitTestCase {
     }
 
     $request->overrideGlobals();
-    $event = new GetResponseEvent($kernel, $request, 'foo', new NotFoundHttpException('foo'));
+    $event = new RequestEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
     $client_ip_restore->onRequest($event);
     $this->assertEquals($expected_client_ip, $request->getClientIp());
 

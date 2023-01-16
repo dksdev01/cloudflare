@@ -13,7 +13,15 @@ use Drupal\Tests\BrowserTestBase;
  */
 class ComposerDependencyTest extends BrowserTestBase {
 
+  /**
+   * {@inheritdoc}
+   */
   public static $modules = ['cloudflare', 'cloudflare_form_tester', 'ctools'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * An admin user that has been setup for the test.
