@@ -58,6 +58,8 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
     $this->drupalLogin($this->adminUser);
     $this->drupalGet($this->formUrl);
     $this->assertSession()->pageTextContains('This will help suppress log warnings regarding requests bypassing CloudFlare', 'Helper Text');
+    $this->assertSession()->fieldExists('auth_using');
+    $this->assertSession()->fieldExists('api_token');
     $this->assertSession()->fieldExists('apikey');
     $this->assertSession()->fieldExists('email');
     $this->assertSession()->fieldExists('client_ip_restore_enabled');

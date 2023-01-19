@@ -2,15 +2,11 @@
 
 namespace Drupal\cloudflare_form_tester\Mocks;
 
-use CloudFlarePhpSdk\Exceptions\CloudFlareInvalidCredentialException;
-use CloudFlarePhpSdk\ApiTypes\Zone\Zone;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\cloudflare\CloudFlareZoneInterface;
 use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
-use CloudFlarePhpSdk\ApiTypes\Zone\ZoneSettings;
-use CloudFlarePhpSdk\Exceptions\CloudFlareException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -39,13 +35,6 @@ class ZoneMock implements CloudFlareZoneInterface {
    * @var \Drupal\cloudflare\CloudFlareStateInterface
    */
   protected $state;
-
-  /**
-   * ZoneApi object for interfacing with CloudFlare Php Sdk.
-   *
-   * @var \CloudFlarePhpSdk\ApiEndpoints\ZoneApi
-   */
-  protected $zoneApi;
 
   /**
    * The current cloudflare ZoneId.
@@ -105,47 +94,6 @@ class ZoneMock implements CloudFlareZoneInterface {
   /**
    * {@inheritdoc}
    */
-  public function getZoneSettings() {
-    $this->cloudFlareComposerDependenciesCheck->assert();
-
-    if (!$this->validCredentials) {
-      return NULL;
-    }
-
-    try {
-      $settings = $this->zoneApi->getZoneSettings($this->zone);
-      $this->state->incrementApiRateCount();
-      return $settings;
-    }
-    catch (CloudFlareException $e) {
-      $this->logger->error($e->getMessage());
-      throw $e;
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function updateZoneSettings(ZoneSettings $zone_settings) {
-    $this->cloudFlareComposerDependenciesCheck->assert();
-
-    if (!$this->validCredentials) {
-      return;
-    }
-
-    try {
-      $this->zoneApi->updateZone($zone_settings);
-      $this->state->incrementApiRateCount();
-    }
-    catch (CloudFlareException $e) {
-      $this->logger->error($e->getMessage());
-      throw $e;
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function listZones() {
     $cloudflare_zone_settings = [];
 
@@ -181,8 +129,8 @@ class ZoneMock implements CloudFlareZoneInterface {
     $cloudflare_zone_settings2['permissions'] = 'EMPTY';
     $cloudflare_zone_settings2['plan'] = 'EMPTY';
 
-    $zone1 = new Zone($cloudflare_zone_settings);
-    $zone2 = new Zone($cloudflare_zone_settings2);
+    $zone1 = (object) $cloudflare_zone_settings;
+    $zone2 = (object) $cloudflare_zone_settings2;
 
     $has_multi_zone = \Drupal::state()->get('cloudflaretesting.multizone');
 
@@ -218,10 +166,21 @@ class ZoneMock implements CloudFlareZoneInterface {
   /**
    * {@inheritdoc}
    */
+  public static function assertValidToken($apitoken, CloudFlareComposerDependenciesCheckInterface $composer_dependency_check, CloudFlareStateInterface $state, $zone_name = '') {
+    $assert_valid_credentials = \Drupal::state()->get('cloudflaretesting.assetValidCredentials');
+    if ($assert_valid_credentials != TRUE) {
+      throw new \Exception("invalid", 1);
+    }
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function assertValidCredentials($apikey, $email, CloudFlareComposerDependenciesCheckInterface $composer_dependency_check, CloudFlareStateInterface $state) {
     $assert_valid_credentials = \Drupal::state()->get('cloudflaretesting.assetValidCredentials');
     if ($assert_valid_credentials != TRUE) {
-      throw new CloudFlareInvalidCredentialException("invalid", 1);
+      throw new \Exception("invalid", 1);
     }
 
   }

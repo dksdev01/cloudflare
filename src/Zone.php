@@ -2,15 +2,16 @@
 
 namespace Drupal\cloudflare;
 
+use Cloudflare\API\Adapter\Guzzle;
+use Cloudflare\API\Auth\APIKey;
+use Cloudflare\API\Auth\APIToken;
+use Cloudflare\API\Endpoints\Zones;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\cloudflare\Exception\ComposerDependencyException;
-use CloudFlarePhpSdk\ApiEndpoints\ZoneApi;
-use CloudFlarePhpSdk\ApiTypes\Zone\ZoneSettings;
-use CloudFlarePhpSdk\Exceptions\CloudFlareException;
+use GuzzleHttp\Exception\ClientException;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Config\Definition\Exception\Exception;
 
 /**
  * Zone methods for CloudFlare.
@@ -42,7 +43,7 @@ class Zone implements CloudFlareZoneInterface {
   /**
    * ZoneApi object for interfacing with CloudFlare Php Sdk.
    *
-   * @var \CloudFlarePhpSdk\ApiEndpoints\ZoneApi
+   * @var \Cloudflare\API\Endpoints\Zones
    */
   protected $zoneApi;
 
@@ -52,6 +53,13 @@ class Zone implements CloudFlareZoneInterface {
    * @var string
    */
   protected $zone;
+
+  /**
+   * The zone name to filter for.
+   *
+   * @var string
+   */
+  protected $zoneName;
 
   /**
    * Flag for valid credentials.
@@ -79,14 +87,28 @@ class Zone implements CloudFlareZoneInterface {
    */
   public static function create(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CacheBackendInterface $cache, CloudFlareStateInterface $state, CloudFlareComposerDependenciesCheckInterface $check_interface) {
     $config = $config_factory->get('cloudflare.settings');
-    $api_key = $config->get('apikey');
-    $email = $config->get('email');
+    $auth_using = $config->get('auth_using');
+    if ($auth_using === 'key') {
+      $api_key = $config->get('apikey');
+      $email = $config->get('email');
+    }
+    elseif ($auth_using === 'token') {
+      $token = $api_key = $config->get('api_token');
+    }
 
     // If someone has not correctly installed composer here is where we need to
     // handle it to prevent PHP error.
     try {
       $check_interface->assert();
-      $zoneapi = new ZoneApi($api_key, $email);
+      if ($auth_using === 'key') {
+        $key = new APIKey($email, $api_key);
+      }
+      elseif ($auth_using === 'token') {
+        $key = new APIToken($token);
+      }
+
+      $adapter = new Guzzle($key);
+      $zoneapi = new Zones($adapter);
     }
     catch (ComposerDependencyException $e) {
       $zoneapi = NULL;
@@ -113,7 +135,7 @@ class Zone implements CloudFlareZoneInterface {
    *   The cache backend.
    * @param \Drupal\cloudflare\CloudFlareStateInterface $state
    *   Tracks rate limits associated with CloudFlare Api.
-   * @param \CloudFlarePhpSdk\ApiEndpoints\ZoneApi|null $zone_api
+   * @param \Cloudflare\API\Endpoints\Zones|null $zone_api
    *   ZoneApi instance for accessing api.
    * @param \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface $check_interface
    *   Checks that composer dependencies are met.
@@ -125,49 +147,9 @@ class Zone implements CloudFlareZoneInterface {
     $this->state = $state;
     $this->zoneApi = $zone_api;
     $this->zone = $this->config->get('zone');
+    $this->zoneName = $this->config->get('zone_name');
     $this->validCredentials = $this->config->get('valid_credentials');
     $this->cloudFlareComposerDependenciesCheck = $check_interface;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getZoneSettings() {
-    $this->cloudFlareComposerDependenciesCheck->assert();
-
-    if (!$this->validCredentials) {
-      return NULL;
-    }
-
-    try {
-      $settings = $this->zoneApi->getZoneSettings($this->zone);
-      $this->state->incrementApiRateCount();
-      return $settings;
-    }
-    catch (CloudFlareException $e) {
-      $this->logger->error($e->getMessage());
-      throw $e;
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function updateZoneSettings(ZoneSettings $zone_settings) {
-    $this->cloudFlareComposerDependenciesCheck->assert();
-
-    if (!$this->validCredentials) {
-      return;
-    }
-
-    try {
-      $this->zoneApi->updateZone($zone_settings);
-      $this->state->incrementApiRateCount();
-    }
-    catch (CloudFlareException $e) {
-      $this->logger->error($e->getMessage());
-      throw $e;
-    }
   }
 
   /**
@@ -184,19 +166,22 @@ class Zone implements CloudFlareZoneInterface {
       }
 
       else {
-        $zones = $this->zoneApi->listZones();
+        $next_page = 0;
+        $total_pages = 1;
 
-        // @todo come up with a better approach.
-        $num_pages = ceil(count($zones) / ZoneApi::MAX_ITEMS_PER_PAGE);
-        for ($i = 0; $i < $num_pages; $i++) {
+        while ($next_page < $total_pages) {
+          $this->zoneName = !empty($this->zoneName) ? $this->zoneName : '';
+          $results = $this->zoneApi->listZones($this->zoneName, '', $next_page);
+          $zones = array_merge($zones, $results->result);
           $this->state->incrementApiRateCount();
+          $total_pages = $results->result_info->total_pages;
+          $next_page = $results->result_info->page;
         }
 
         $this->cache->set($cid, $zones, time() + 60 * 5, ['cloudflare_zone']);
       }
-
     }
-    catch (CloudFlareException $e) {
+    catch (ClientException $e) {
       $this->logger->error($e->getMessage());
       throw $e;
     }
@@ -206,20 +191,36 @@ class Zone implements CloudFlareZoneInterface {
   /**
    * {@inheritdoc}
    */
-  public static function assertValidCredentials($apikey, $email, CloudFlareComposerDependenciesCheckInterface $composer_dependency_check, CloudFlareStateInterface $state) {
+  public static function assertValidToken($apitoken, CloudFlareComposerDependenciesCheckInterface $composer_dependency_check, CloudFlareStateInterface $state, $zone_name = '') {
     $composer_dependency_check->assert();
-    $zone_api_direct = new ZoneApi($apikey, $email);
+    $key = new APIToken($apitoken);
+    $adapter = new Guzzle($key);
+    $zone_api_direct = new Zones($adapter);
 
     try {
-      $zones = $zone_api_direct->listZones();
-    }
-    catch (Exception $e) {
-      throw $e;
+      $zone_api_direct->listZones($zone_name);
     }
     finally {
       $state->incrementApiRateCount();
     }
 
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function assertValidCredentials($apikey, $email, CloudFlareComposerDependenciesCheckInterface $composer_dependency_check, CloudFlareStateInterface $state) {
+    $composer_dependency_check->assert();
+    $key = new APIKey($email, $apikey);
+    $adapter = new Guzzle($key);
+    $zone_api_direct = new Zones($adapter);
+
+    try {
+      $zone_api_direct->listZones();
+    }
+    finally {
+      $state->incrementApiRateCount();
+    }
   }
 
 }

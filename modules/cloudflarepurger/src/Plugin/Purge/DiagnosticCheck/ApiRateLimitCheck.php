@@ -6,7 +6,6 @@ use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckBase;
 use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
 use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
-use CloudFlarePhpSdk\ApiEndpoints\CloudFlareAPI;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -25,6 +24,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class ApiRateLimitCheck extends DiagnosticCheckBase implements DiagnosticCheckInterface {
+
+  // The CloudFlare API sets a maximum of 1,200 requests in a 5-minute period.
+  public const API_RATE_LIMIT = 1200;
 
   /**
    * Tracks rate limits associated with CloudFlare Api.
@@ -79,7 +81,7 @@ class ApiRateLimitCheck extends DiagnosticCheckBase implements DiagnosticCheckIn
   public function run() {
     if (!$this->cloudFlareComposerDependenciesCheck->check()) {
       $this->recommendation = $this->t("Composer dependencies unmet.  Unable to assess API rate limits.");
-      return SELF::SEVERITY_ERROR;
+      return self::SEVERITY_ERROR;
     }
 
     // Current number of purges today.
@@ -87,26 +89,26 @@ class ApiRateLimitCheck extends DiagnosticCheckBase implements DiagnosticCheckIn
     $this->value = $rate_count;
 
     // Warn at 75% of capacity.
-    $daily_warning_level = .75 * CloudFlareAPI::API_RATE_LIMIT;
+    $daily_warning_level = .75 * self::API_RATE_LIMIT;
 
     $message_variables = [
-      ':rate_limit' => CloudFlareAPI::API_RATE_LIMIT,
+      ':rate_limit' => self::API_RATE_LIMIT,
       ':$rate_count' => $rate_count,
     ];
 
-    if ($rate_count >= CloudFlareAPI::API_RATE_LIMIT) {
+    if ($rate_count >= self::API_RATE_LIMIT) {
       $this->recommendation = $this->t('Exceeded Api limit of :$rate_count/:rate_limit limit purges/day.', $message_variables);
-      return SELF::SEVERITY_ERROR;
+      return self::SEVERITY_ERROR;
     }
 
     elseif ($rate_count >= $daily_warning_level) {
       $this->recommendation = $this->t('Approaching Api limit of :$rate_count/:rate_limit limit purges/day.', $message_variables);
-      return SELF::SEVERITY_WARNING;
+      return self::SEVERITY_WARNING;
     }
 
     elseif ($rate_count < $daily_warning_level) {
       $this->recommendation = $this->t('Site is safely below the rate limit of :rate_limit every 5 minutes.', $message_variables);
-      return SELF::SEVERITY_OK;
+      return self::SEVERITY_OK;
     }
   }
 

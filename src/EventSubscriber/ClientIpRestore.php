@@ -81,8 +81,8 @@ class ClientIpRestore implements EventSubscriberInterface {
     $this->cache = $cache;
     $this->config = $config_factory->get('cloudflare.settings');
     $this->logger = $logger;
-    $this->isClientIpRestoreEnabled = $this->config->get(SELF::CLOUDFLARE_CLIENT_IP_RESTORE_ENABLED);
-    $this->bypassHost = $this->config->get(SELF::CLOUDFLARE_BYPASS_HOST);
+    $this->isClientIpRestoreEnabled = $this->config->get(self::CLOUDFLARE_CLIENT_IP_RESTORE_ENABLED);
+    $this->bypassHost = $this->config->get(self::CLOUDFLARE_BYPASS_HOST);
   }
 
   /**
@@ -134,7 +134,10 @@ class ClientIpRestore implements EventSubscriberInterface {
     $request_originating_from_cloudflare = IpUtils::checkIp($client_ip, $cloudflare_ipranges);
 
     if ($has_http_cf_connecting_ip && !$request_originating_from_cloudflare) {
-      $message = $this->t("Client IP of @client_ip does not match a known CloudFlare IP but there is HTTP_CF_CONNECTING_IP of @cf_connecting_ip.", ['@cf_connecting_ip' => $cf_connecting_ip, '@client_ip' => $client_ip]);
+      $message = $this->t("Client IP of @client_ip does not match a known CloudFlare IP but there is HTTP_CF_CONNECTING_IP of @cf_connecting_ip.", [
+        '@cf_connecting_ip' => $cf_connecting_ip,
+        '@client_ip' => $client_ip,
+      ]);
       $this->logger->warning($message);
       return;
     }
@@ -160,11 +163,11 @@ class ClientIpRestore implements EventSubscriberInterface {
 
     try {
       $ipv4_raw_listings = trim((string) $this->httpClient
-        ->get(SELF::IPV4_ENDPOINTS_URL)
+        ->get(self::IPV4_ENDPOINTS_URL)
         ->getBody());
 
       $ipv6_raw_listings = trim((string) $this->httpClient
-        ->get(SELF::IPV6_ENDPOINTS_URL)
+        ->get(self::IPV6_ENDPOINTS_URL)
         ->getBody());
 
       $iv4_endpoints = explode("\n", $ipv4_raw_listings);
@@ -176,7 +179,7 @@ class ClientIpRestore implements EventSubscriberInterface {
         $this->logger->error("Unable to get a listing of CloudFlare IPs.");
         return [];
       }
-      $this->cache->set(SELF::CLOUDFLARE_RANGE_KEY, $cloudflare_ips, Cache::PERMANENT);
+      $this->cache->set(self::CLOUDFLARE_RANGE_KEY, $cloudflare_ips, Cache::PERMANENT);
       return $cloudflare_ips;
     }
     catch (RequestException $exception) {

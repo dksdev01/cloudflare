@@ -5,7 +5,6 @@ namespace Drupal\cloudflarepurger\Plugin\Purge\DiagnosticCheck;
 use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckBase;
 use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
 use Drupal\cloudflare\CloudFlareStateInterface;
-use CloudFlarePhpSdk\ApiEndpoints\CloudFlareAPI;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -26,6 +25,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class DailyTagPurgeLimitCheck extends DiagnosticCheckBase implements DiagnosticCheckInterface {
+
+  // Updating limit to 30,000 as mentioned in the API documentation.
+  // @see https://api.cloudflare.com/#zone-purge-files-by-cache-tags-or-host
+  const API_TAG_PURGE_DAILY_RATE_LIMIT = 30000;
 
   /**
    * Tracks rate limits associated with CloudFlare Api.
@@ -80,34 +83,36 @@ class DailyTagPurgeLimitCheck extends DiagnosticCheckBase implements DiagnosticC
   public function run() {
     if (!$this->areCloudFlareComposerDependenciesMet) {
       $this->recommendation = $this->t("Composer dependencies unmet.  Unable to assess API rate limits.");
-      return SELF::SEVERITY_ERROR;
+      return self::SEVERITY_ERROR;
     }
+    // Reset the daily count if this is a new day.
+    $this->state->resetTagPurgeDailyCount();
 
     // Current number of purges today.
     $daily_count = $this->state->getTagDailyCount();
     $this->value = $daily_count;
 
     // Warn at 75% of capacity.
-    $daily_warning_level = .75 * CloudFlareAPI::API_TAG_PURGE_DAILY_RATE_LIMIT;
+    $daily_warning_level = .75 * self::API_TAG_PURGE_DAILY_RATE_LIMIT;
 
     $message_variables = [
-      ':daily_limit' => CloudFlareAPI::API_TAG_PURGE_DAILY_RATE_LIMIT,
-      ':$daily_count' => $daily_count,
+      ':daily_limit' => self::API_TAG_PURGE_DAILY_RATE_LIMIT,
+      ':daily_count' => $daily_count,
     ];
 
-    if ($daily_count >= CloudFlareAPI::API_TAG_PURGE_DAILY_RATE_LIMIT) {
+    if ($daily_count >= self::API_TAG_PURGE_DAILY_RATE_LIMIT) {
       $this->recommendation = $this->t('Past Api limit of :daily_count/:daily_limit limit tag purges/day.', $message_variables);
-      return SELF::SEVERITY_ERROR;
+      return self::SEVERITY_ERROR;
     }
 
     elseif ($daily_count >= $daily_warning_level) {
       $this->recommendation = $this->t('Approaching Api limit of :daily_count/:daily_limit limit tag purges/day.', $message_variables);
-      return SELF::SEVERITY_WARNING;
+      return self::SEVERITY_WARNING;
     }
 
     elseif ($daily_count < $daily_warning_level) {
       $this->recommendation = $this->t('Site is safely below the daily limit of :daily_limit tag purges/day.', $message_variables);
-      return SELF::SEVERITY_OK;
+      return self::SEVERITY_OK;
     }
   }
 

@@ -37,4 +37,9 @@ interface CloudFlareStateInterface {
    */
   public function incrementTagPurgeDailyCount();
 
+  /**
+   * Reset the daily count if it is a new day.
+   */
+  public function resetTagPurgeDailyCount();
+
 }

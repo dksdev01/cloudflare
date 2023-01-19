@@ -12,13 +12,6 @@ use Drupal\Core\Url;
  */
 function cloudflare_requirements($phase) {
   $requirements = [];
-  if (!class_exists('\CloudFlarePhpSdk\ApiEndpoints\ZoneApi')) {
-    $requirements['cloudflare_library'] = [
-      'title' => t('CloudFlare - Php Sdk'),
-      'description' => t('CloudFlare requires the d8-contrib-modules/cloudflarephpsdk library.'),
-      'severity' => REQUIREMENT_ERROR,
-    ];
-  }
 
   if ($phase == 'runtime') {
     $config = \Drupal::config('cloudflare.settings');
@@ -75,5 +68,27 @@ function cloudflare_update_8002(&$sandbox) {
   }
   catch(PluginNotFoundException $e) {
     throw new UpdateException('Update 8002 failed with the following: ' . $e->getMessage(), $e->getCode(), $e);
+  }
+}
+
+/**
+ * Cloudflare to support multiple zones for multiple domains.
+ */
+function cloudflare_update_8003(&$sandbox) {
+  // Convert existing zone id value from type string to array.
+  $config = \Drupal::service('config.factory')->getEditable('cloudflare.settings');
+  $zone_id = $config->get('zone_id');
+  $config->set('zone_id', $zone_id ? [$zone_id] : [])->save();
+}
+
+/**
+ * Cloudflare to support multiple zones for multiple domains.
+ */
+function cloudflare_update_8004(&$sandbox) {
+  // Ensure auth_using is set.
+  $config = \Drupal::service('config.factory')->getEditable('cloudflare.settings');
+  $auth_using = $config->get('auth_using');
+  if (!in_array($auth_using, ['key', 'token'])) {
+    $config->set('auth_using', 'key')->save();
   }
 }

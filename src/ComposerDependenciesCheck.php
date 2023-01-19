@@ -53,7 +53,7 @@ class ComposerDependenciesCheck implements CloudFlareComposerDependenciesCheckIn
       return self::$areDependenciesMet;
     }
 
-    if (class_exists('\CloudFlarePhpSdk\ApiEndpoints\ZoneApi')) {
+    if (class_exists('\Cloudflare\API\Endpoints\Zones')) {
       self::$areDependenciesMet = TRUE;
     }
 

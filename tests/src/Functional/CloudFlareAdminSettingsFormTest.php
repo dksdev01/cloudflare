@@ -81,7 +81,7 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
     $this->drupalGet($this->formUrl);
     $this->submitForm($edit, 'Next');
     $this->assertSession()->addressEquals('/admin/config/services/cloudflare/two?js=nojs');
-    $this->submitForm(['zone_selection' => '123456789999'], 'Finish');
+    $this->submitForm(['zone_selection[]' => '123456789999'], 'Finish');
     $this->assertSession()->responseContains('68ow48650j63zfzx1w9jd29cr367u0ezb6a4g');
     $this->assertSession()->responseContains('testdomain2.com');
   }

@@ -14,10 +14,10 @@
     }
   ],
   "require": {
-    "d8-contrib-modules/cloudflarephpsdk": "^1",
+    "cloudflare/sdk": "^1",
     "drupal/ctools": "^3.0"
   },
   "require-dev": {
-    "drupal/purge": "^3.0@beta"
+    "drupal/purge": "^3.0"
   }
 }

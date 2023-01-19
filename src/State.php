@@ -3,7 +3,6 @@
 namespace Drupal\cloudflare;
 
 use Drupal\Core\State\StateInterface;
-use DateTime;
 
 /**
  * Tracks rate limits associated with CloudFlare Api.
@@ -47,8 +46,16 @@ class State implements CloudFlareStateInterface {
    */
   public function incrementTagPurgeDailyCount() {
     $count = $this->state->get(self::TAG_PURGE_DAILY_COUNT);
+    $count++;
+    $this->state->set(self::TAG_PURGE_DAILY_COUNT, $count);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function resetTagPurgeDailyCount() {
     $last_recorded_timestamp = $this->state->get(self::TAG_PURGE_DAILY_COUNT_START);
-    $last_recorded_timestamp = is_null($last_recorded_timestamp) ? new DateTime('2001-01-01') : $last_recorded_timestamp;
+    $last_recorded_timestamp = is_null($last_recorded_timestamp) ? new \DateTime('2001-01-01') : $last_recorded_timestamp;
 
     $now = $this->timestamper->now();
     $todays_date = $now->format('Y-m-d');
@@ -57,11 +64,6 @@ class State implements CloudFlareStateInterface {
     if (empty($last_recorded_timestamp) || ($last_recorded_date != $todays_date)) {
       $this->state->set(self::TAG_PURGE_DAILY_COUNT, 1);
       $this->state->set(self::TAG_PURGE_DAILY_COUNT_START, $now);
-    }
-
-    else {
-      $count++;
-      $this->state->set(self::TAG_PURGE_DAILY_COUNT, $count);
     }
   }
 
@@ -78,7 +80,7 @@ class State implements CloudFlareStateInterface {
   public function incrementApiRateCount() {
     $count = $this->state->get(self::API_RATE_COUNT);
     $last_recorded_timestamp = $this->state->get(self::API_RATE_COUNT_START);
-    $last_recorded_timestamp = is_null($last_recorded_timestamp) ? new DateTime('2001-01-01') : $last_recorded_timestamp;
+    $last_recorded_timestamp = is_null($last_recorded_timestamp) ? new \DateTime('2001-01-01') : $last_recorded_timestamp;
 
     $now = $this->timestamper->now();
     $diff = $now->getTimestamp() - $last_recorded_timestamp->getTimestamp();

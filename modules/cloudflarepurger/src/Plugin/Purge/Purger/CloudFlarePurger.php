@@ -2,6 +2,10 @@
 
 namespace Drupal\cloudflarepurger\Plugin\Purge\Purger;
 
+use Cloudflare\API\Adapter\Guzzle;
+use Cloudflare\API\Auth\APIKey;
+use Cloudflare\API\Auth\APIToken;
+use Cloudflare\API\Endpoints\Zones;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
@@ -9,8 +13,6 @@ use Drupal\cloudflarepurger\EventSubscriber\CloudFlareCacheTagHeaderGenerator;
 use Drupal\purge\Plugin\Purge\Purger\PurgerBase;
 use Drupal\purge\Plugin\Purge\Purger\PurgerInterface;
 use Drupal\purge\Plugin\Purge\Invalidation\InvalidationInterface;
-use CloudFlarePhpSdk\ApiEndpoints\CloudFlareAPI;
-use CloudFlarePhpSdk\ApiEndpoints\ZoneApi;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -26,6 +28,9 @@ use Psr\Log\LoggerInterface;
  * )
  */
 class CloudFlarePurger extends PurgerBase implements PurgerInterface {
+
+  // Max Number of tag purges.
+  public const MAX_TAG_PURGES_PER_REQUEST = 30;
 
   /**
    * The settings configuration.
@@ -47,13 +52,6 @@ class CloudFlarePurger extends PurgerBase implements PurgerInterface {
    * @var \Drupal\cloudflare\CloudFlareStateInterface
    */
   protected $state;
-
-  /**
-   * ZoneApi object for interfacing with CloudFlare Php Sdk.
-   *
-   * @var \CloudFlarePhpSdk\ApiEndpoints\ZoneApi
-   */
-  protected $zoneApi;
 
   /**
    * The current cloudflare ZoneId.
@@ -124,14 +122,14 @@ class CloudFlarePurger extends PurgerBase implements PurgerInterface {
       'url'  => 'invalidate',
     ];
 
-    return isset($methods[$type]) ? $methods[$type] : 'invalidate';
+    return $methods[$type] ?? 'invalidate';
   }
 
   /**
    * {@inheritdoc}
    */
   public function invalidate(array $invalidations) {
-    $chunks = array_chunk($invalidations, CloudFlareAPI::MAX_TAG_PURGES_PER_REQUEST);
+    $chunks = array_chunk($invalidations, self::MAX_TAG_PURGES_PER_REQUEST);
 
     $has_invalidations = count($invalidations) > 0;
     if (!$has_invalidations) {
@@ -166,10 +164,19 @@ class CloudFlarePurger extends PurgerBase implements PurgerInterface {
     // This is a unique case where the ApiSdk is being accessed directly and not
     // via a service.  Purging should only ever happen through the purge module
     // which is why this is NOT in a service.
-    $api_key = $this->config->get('apikey');
-    $email = $this->config->get('email');
+    $auth_using = $this->config->get('auth_using');
+    if ($auth_using === 'key') {
+      $api_key = $this->config->get('apikey');
+      $email = $this->config->get('email');
+      $key = new APIKey($email, $api_key);
+    }
+    elseif ($auth_using === 'token') {
+      $token = $this->config->get('api_token');
+      $key = new APIToken($token);
+    }
     $this->zone = $this->config->get('zone_id');
-    $this->zoneApi = new ZoneApi($api_key, $email);
+    $adapter = new Guzzle($key);
+    $zoneApi = new Zones($adapter);
 
     $api_targets_to_purge = [];
 
@@ -187,24 +194,46 @@ class CloudFlarePurger extends PurgerBase implements PurgerInterface {
     }
 
     try {
-      // Interface with the CloudFlarePhpSdk.
+      // Interface with the Cloudflare SDK.
       $invalidation_type = $invalidations[0]->getPluginId();
       if ($invalidation_type == 'tag') {
         // @todo Remove this wrapper once CloudFlare supports 16k headers.
         // Also invalidate the cache tags as hashes, to automatically also work
         // for responses that exceed CloudFlare's Cache-Tag header limit.
         $hashes = CloudFlareCacheTagHeaderGenerator::cacheTagsToHashes($api_targets_to_purge);
-        $this->zoneApi->purgeTags($this->zone, $hashes);
+        foreach ($this->zone as $zone_id) {
+          $zoneApi->cachePurge($zone_id, NULL, $hashes);
+        }
         $this->state->incrementTagPurgeDailyCount();
-
       }
 
       elseif ($invalidation_type == 'url') {
-        $this->zoneApi->purgeIndividualFiles($this->zone, $api_targets_to_purge);
+        $zone_name = $this->config->get('zone_name');
+        $zones = $zoneApi->listZones($zone_name)->result ?? [];
+
+        // Filter URLs based on specific zones.
+        $purge_zone_urls = [];
+        foreach ($zones as $zone) {
+          foreach ($api_targets_to_purge as $item) {
+            // Check if URL item belongs to avaliable zone(s).
+            // And group them based on their zone-ids.
+            if (strpos($item, $zone->name) !== FALSE) {
+              $purge_zone_urls[$zone->id][] = $item;
+            }
+          }
+        }
+
+        foreach ($this->zone as $zone_id) {
+          if (!empty($purge_zone_urls[$zone_id])) {
+            $zoneApi->cachePurge($zone_id, $purge_zone_urls[$zone_id]);
+          }
+        }
       }
 
       elseif ($invalidation_type == 'everything') {
-        $this->zoneApi->purgeAllFiles($this->zone);
+        foreach ($this->zone as $zone_id) {
+          $zoneApi->cachePurgeEverything($zone_id);
+        }
       }
 
       foreach ($invalidations as $invalidation) {

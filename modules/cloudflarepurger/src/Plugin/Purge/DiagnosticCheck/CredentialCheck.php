@@ -63,11 +63,11 @@ class CredentialCheck extends DiagnosticCheckBase implements DiagnosticCheckInte
 
     if (!$has_valid_credentials) {
       $this->recommendation = $this->t("Invalid Api credentials.");
-      return SELF::SEVERITY_ERROR;
+      return self::SEVERITY_ERROR;
     }
 
     $this->recommendation = $this->t('Valid Api credentials detected.');
-    return SELF::SEVERITY_OK;
+    return self::SEVERITY_OK;
   }
 
 }

@@ -13,11 +13,9 @@ use Drupal\Core\Url;
 use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareZoneInterface;
 use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
-use Psr\Log\LoggerInterface;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use CloudFlarePhpSdk\Exceptions\CloudFlareException;
-use CloudFlarePhpSdk\Exceptions\CloudFlareTimeoutException;
-use CloudFlarePhpSdk\Exceptions\CloudFlareInvalidCredentialException;
 
 /**
  * Class SettingsForm.
@@ -25,6 +23,12 @@ use CloudFlarePhpSdk\Exceptions\CloudFlareInvalidCredentialException;
  * @package Drupal\cloudflare\Form
  */
 class SettingsForm extends FormBase implements ContainerInjectionInterface {
+
+  // The length of the Api key.
+  // The Api will throw a non-descriptive http code: 400 exception if the key
+  // length is greater than 37. If the key is invalid but the expected length
+  // the Api will return a more informative http code of 403.
+  const API_KEY_LENGTH = 37;
 
   /**
    * Email validator class.
@@ -46,13 +50,6 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $configFactory;
-
-  /**
-   * A logger instance for CloudFlare.
-   *
-   * @var \Psr\Log\LoggerInterface
-   */
-  protected $logger;
 
   /**
    * Tracks rate limits associated with CloudFlare API.
@@ -97,9 +94,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
     return new static(
       $container->get('config.factory'),
       $container->get('cloudflare.state'),
-
       $has_zone_mock ? $container->get('cloudflare.zonemock') : $container->get('cloudflare.zone'),
-      $container->get('logger.factory')->get('cloudflare'),
       $email_validator,
       $has_composer_mock ? $container->get('cloudflare.composer_dependency_checkmock') : $container->get('cloudflare.composer_dependency_check')
     );
@@ -114,18 +109,15 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
    *   Tracks rate limits associated with CloudFlare API.
    * @param \Drupal\cloudflare\CloudFlareZoneInterface $zone_api
    *   ZoneApi instance for accessing api.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger instance.
    * @param \Drupal\Component\Utility\EmailValidator|\Egulias\EmailValidator\EmailValidator $email_validator
    *   The email validator.
    * @param \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface $check_interface
    *   Checks if composer dependencies are met.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, CloudFlareStateInterface $state, CloudFlareZoneInterface $zone_api, LoggerInterface $logger, $email_validator, CloudFlareComposerDependenciesCheckInterface $check_interface) {
+  public function __construct(ConfigFactoryInterface $config_factory, CloudFlareStateInterface $state, CloudFlareZoneInterface $zone_api, $email_validator, CloudFlareComposerDependenciesCheckInterface $check_interface) {
     $this->configFactory = $config_factory;
     $this->state = $state;
     $this->zoneApi = $zone_api;
-    $this->logger = $logger;
     $this->emailValidator = $email_validator;
     $this->cloudFlareComposerDependenciesCheck = $check_interface;
     $this->cloudFlareComposerDependenciesMet = $check_interface->check();
@@ -188,18 +180,31 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
       '#type' => 'fieldset',
       '#title' => $this->t('API Credentials'),
     ];
+    $section['api_credentials_fieldset']['auth_using'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('Authenticate using'),
+      '#default_value' => $config->get('auth_using'),
+      '#options' => [
+        'key' => $this->t('Key and Email'),
+        'token' => $this->t('Token'),
+      ],
+    ];
+    $section['api_credentials_fieldset']['api_token'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('CloudFlare API Token (required when using token)'),
+      '#description' => $this->t('Your API Token. Get it at <a href="https://www.cloudflare.com/a/account/my-account">cloudflare.com/a/account/my-account</a>.'),
+      '#default_value' => $config->get('api_token'),
+    ];
     $section['api_credentials_fieldset']['apikey'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('CloudFlare API Key'),
+      '#title' => $this->t('CloudFlare API Key (required when using key)'),
       '#description' => $this->t('Your API key. Get it at <a href="https://www.cloudflare.com/a/account/my-account">cloudflare.com/a/account/my-account</a>.'),
       '#default_value' => $config->get('apikey'),
-      '#required' => TRUE,
     ];
     $section['api_credentials_fieldset']['email'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Account e-mail address'),
+      '#title' => $this->t('Account e-mail address (required when using key)'),
       '#default_value' => $config->get('email'),
-      '#required' => TRUE,
     ];
 
     return $section;
@@ -223,39 +228,52 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
       '#weight' => 0,
     ];
 
-    $zone_id = $config->get('zone_id');
-    if (!empty($zone_id)) {
+    $section['zone_selection_fieldset']['zone_name'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Limit by zone name'),
+      '#default_value' => $config->get('zone_name'),
+    ];
+
+    $zone_ids = $config->get('zone_id') ?? [];
+    if (is_array($zone_ids) && !empty($zone_ids)) {
       // Get the zones.
       $zones = [];
       if ($config->get('valid_credentials') === TRUE && $this->cloudFlareComposerDependenciesMet) {
         try {
           $zones = $this->zoneApi->listZones();
         }
-        catch (CloudFlareTimeoutException $e) {
-          $this->messenger()->addError($this->t('Unable to connect to CloudFlare in order to validate credentials. Connection timed out. Please try again later.'));
+        catch (RequestException $e) {
+          $this->messenger()->addError($this->t('Unable to connect to CloudFlare in order to validate credentials. Please try again later. Error message: @message', ['@message' => $e->getMessage()]));
         }
       }
 
       // Find this zone_id.
       foreach ($zones as $zone) {
-        if ($zone->getZoneId() == $zone_id) {
-          $zone_text = $zone->getName();
-          break;
+        foreach ($zone_ids as $zone_id) {
+          if ($zone->id == $zone_id) {
+            $zone_text[$zone_id] = $zone->name;
+            break;
+          }
         }
       }
+      $selected_zones = [];
+      foreach ($zone_ids as $zone_id) {
+        $selected_zones[] = $zone_text[$zone_id];
+      }
 
-      $description = $this->t('To change the current zone click the "Next" button below.');
+      $default_value = implode(PHP_EOL, $selected_zones);
+      $description = $this->t('To change the current selected zones click the "Next" button below.');
     }
     else {
-      $zone_text = $this->t('No Zone Selected');
-      $description = $this->t('No zone has been selected.  Enter valid Api credentials then click next.');
+      $default_value = $this->t('No zone selected');
+      $description = $this->t('No zone has been selected. Enter valid API credentials then click the "Next" button below.');
     }
 
     $section['zone_selection_fieldset']['zone'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Current Zone'),
+      '#type' => 'textarea',
+      '#title' => $this->t('Selected Zones'),
       '#description' => $description,
-      '#default_value' => $zone_text,
+      '#default_value' => $default_value,
       '#disabled' => TRUE,
     ];
 
@@ -300,33 +318,83 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    // Get the email address and apikey.
-    $email = trim($form_state->getValue('email'));
-    $apikey = trim($form_state->getValue('apikey'));
+    $auth_using = trim($form_state->getValue('auth_using'));
+    if ($auth_using === 'key') {
+      // Get the email address and apikey.
+      $email = trim($form_state->getValue('email'));
+      $apikey = trim($form_state->getValue('apikey'));
+      // Validate the email address.
+      if (!$this->emailValidator->isValid($email)) {
+        $form_state->setErrorByName('email', $this->t('Please enter a valid e-mail address.'));
+        return;
+      }
 
-    // Validate the email address.
-    if (!$this->emailValidator->isValid($email)) {
-      $form_state->setErrorByName('email', $this->t('Please enter a valid e-mail address.'));
-      return;
-    }
+      // This check seems superfluous.  However, the Api only returns a http 400
+      // code. This proactive check gives us more information.
+      $is_api_key_valid = strlen($apikey) == $this::API_KEY_LENGTH;
+      $is_api_key_alpha_numeric = ctype_alnum($apikey);
+      $is_api_key_lower_case = !(preg_match('/[A-Z]/', $apikey));
 
-    try {
-      // Confirm that the credentials can authenticate with the CloudFlareApi.
-      $this->zoneApi->assertValidCredentials($apikey, $email, $this->cloudFlareComposerDependenciesCheck, $this->state);
+      if (!$is_api_key_valid) {
+        $form_state->setErrorByName('apikey', $this->t('Invalid Api Key: Key should be 37 chars long.'));
+        return;
+      }
+
+      if (!$is_api_key_alpha_numeric) {
+        $form_state->setErrorByName('apikey', $this->t('Invalid Api Key: Key can only contain alphanumeric characters.'));
+        return;
+      }
+
+      if (!$is_api_key_lower_case) {
+        $form_state->setErrorByName('apikey', $this->t('Invalid Api Key: Key can only contain lowercase or numerical characters.'));
+        return;
+      }
+
+      try {
+        // Confirm that the credentials can authenticate with the CloudFlareApi.
+        $this->zoneApi->assertValidCredentials($apikey, $email, $this->cloudFlareComposerDependenciesCheck, $this->state);
+      }
+      catch (ClientException $e) {
+        if ($e->getResponse()->getStatusCode() === 403) {
+          $form_state->setErrorByName('apikey', $this->t($e->getMessage()));
+          return;
+        }
+        $form_state->setErrorByName('apikey', $this->t("An unknown error has occurred when attempting to connect to CloudFlare's API: @error", ['@error' => $e->getMessage()]));
+        return;
+      }
+      catch (RequestException $e) {
+        $form_state->setErrorByName('apikey', $this->t('Unable to connect to CloudFlare in order to validate credentials. Request error: @error', ['@error' => $e->getMessage()]));
+        return;
+      }
     }
-    catch (CloudFlareTimeoutException $e) {
-      $message = $this->t('Unable to connect to CloudFlare in order to validate credentials. Connection timed out. Please try again later.');
-      $form_state->setErrorByName('apikey', $message);
-      $this->logger->error($message);
-      return;
-    }
-    catch (CloudFlareInvalidCredentialException $e) {
-      $form_state->setErrorByName('apiKey', $e->getMessage());
-      return;
-    }
-    catch (CloudFlareException $e) {
-      $form_state->setErrorByName('apikey', $this->t("An unknown error has occurred when attempting to connect to CloudFlare's API") . $e->getMessage());
-      return;
+    elseif ($auth_using === 'token') {
+      // Get the email address and apikey.
+      $token = trim($form_state->getValue('api_token'));
+      try {
+        if (empty($token)) {
+          throw new \Exception('CloudFlare API Token field is empty!');
+        }
+        // Confirm that the credentials can authenticate with the CloudFlareApi.
+        $this->zoneApi->assertValidToken($token, $this->cloudFlareComposerDependenciesCheck, $this->state);
+      }
+      catch (ClientException $e) {
+        if ($e->getResponse()->getStatusCode() === 403) {
+          $form_state->setErrorByName('api_token', $e->getMessage());
+          return;
+        }
+        $form_state->setErrorByName('api_token', $this->t("An unknown error has occurred when attempting to connect to CloudFlare's API") . $e->getMessage());
+        return;
+      }
+      catch (RequestException $e) {
+        $message = $this->t('Unable to connect to CloudFlare in order to validate credentials.');
+        $form_state->setErrorByName('api_token', $message);
+        return;
+      }
+      catch (\Exception $e) {
+        $message = $this->t('Please enter a Cloudflare API Token to proceed.');
+        $form_state->setErrorByName('api_token', $message);
+        return;
+      }
     }
 
     // Validate the bypass host.
@@ -334,7 +402,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
     if (!empty($bypass_host)) {
       // Validate the bypass host does not begin with http.
       if (strpos($bypass_host, 'http') > -1) {
-        $form_state->setErrorByName('$bypass_host', $this->t('Please enter a host without http/https'));
+        $form_state->setErrorByName('bypass_host', $this->t('Please enter a host without http/https'));
         return;
       }
 
@@ -355,6 +423,9 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $api_key = trim($form_state->getValue('apikey'));
     $email = trim($form_state->getValue('email'));
+    $token = trim($form_state->getValue('api_token'));
+    $auth_using = trim($form_state->getValue('auth_using'));
+    $zone_name = trim($form_state->getValue('zone_name'));
 
     // Deslash the host URL.
     $bypass_host = trim(rtrim($form_state->getValue('bypass_host'), "/"));
@@ -362,6 +433,9 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
 
     $config = $this->configFactory->getEditable('cloudflare.settings');
     $config
+      ->set('api_token', $token)
+      ->set('auth_using', $auth_using)
+      ->set('zone_name', $zone_name)
       ->set('apikey', $api_key)
       ->set('email', $email)
       ->set('valid_credentials', TRUE)

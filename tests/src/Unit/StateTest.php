@@ -3,7 +3,6 @@
 namespace Drupal\Tests\cloudflare\Unit;
 
 use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
-use DateTime;
 use Drupal\Tests\UnitTestCase;
 use Drupal\Core\Cache\MemoryBackend;
 use Drupal\Core\Lock\NullLockBackend;
@@ -35,20 +34,23 @@ class StateTest extends UnitTestCase {
         new \DateTime('2010-02-01 00:02:00')
       ));
 
-    $drupal_state_service = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());
+    $drupal_state_service = new CoreState(new KeyValueMemoryFactory());
     $cloudflare_state = new CloudFlareState($drupal_state_service, $timestamp_stub);
     $initial_count = $cloudflare_state->getTagDailyCount();
     $this->assertEquals(0, $initial_count, 'Tested state with empty counts');
 
     $cloudflare_state->incrementTagPurgeDailyCount();
+    $cloudflare_state->resetTagPurgeDailyCount();
     $count = $cloudflare_state->getTagDailyCount();
     $this->assertEquals(1, $count, 'Tested state with first increment of day');
 
     $cloudflare_state->incrementTagPurgeDailyCount();
+    $cloudflare_state->resetTagPurgeDailyCount();
     $count = $cloudflare_state->getTagDailyCount();
     $this->assertEquals(2, $count, 'Tested state with first increment of day');
 
     $cloudflare_state->incrementTagPurgeDailyCount();
+    $cloudflare_state->resetTagPurgeDailyCount();
     $count = $cloudflare_state->getTagDailyCount();
     $this->assertEquals(3, $count, 'Tested state with first increment of day');
   }
@@ -64,25 +66,28 @@ class StateTest extends UnitTestCase {
     // Configure the stub.
     $timestamp_stub->method('now')
       ->will($this->onConsecutiveCalls(
-        new DateTime('2010-02-01 00:00:00'),
-        new DateTime('2010-02-02 00:01:00'),
-        new DateTime('2010-02-03 00:02:00')
+        new \DateTime('2010-02-01 00:00:00'),
+        new \DateTime('2010-02-02 00:01:00'),
+        new \DateTime('2010-02-03 00:02:00')
       ));
 
-    $drupal_state_service = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());
+    $drupal_state_service = new CoreState(new KeyValueMemoryFactory());
     $cloudflare_state = new CloudFlareState($drupal_state_service, $timestamp_stub);
     $initial_count = $cloudflare_state->getTagDailyCount();
     $this->assertEquals(0, $initial_count, 'Tested state with empty counts');
 
     $cloudflare_state->incrementTagPurgeDailyCount();
+    $cloudflare_state->resetTagPurgeDailyCount();
     $count = $cloudflare_state->getTagDailyCount();
     $this->assertEquals(1, $count, 'Tested state with first increment of day');
 
     $cloudflare_state->incrementTagPurgeDailyCount();
+    $cloudflare_state->resetTagPurgeDailyCount();
     $count = $cloudflare_state->getTagDailyCount();
     $this->assertEquals(1, $count, 'Tested state with first increment of day');
 
     $cloudflare_state->incrementTagPurgeDailyCount();
+    $cloudflare_state->resetTagPurgeDailyCount();
     $count = $cloudflare_state->getTagDailyCount();
     $this->assertEquals(1, $count, 'Tested state with first increment of day');
   }
@@ -98,9 +103,9 @@ class StateTest extends UnitTestCase {
     // Configure the stub.
     $timestamp_stub->method('now')
       ->will($this->onConsecutiveCalls(
-        new DateTime('2010-02-01 00:00:00'),
-        new DateTime('2010-02-01 00:01:00'),
-        new DateTime('2010-02-01 00:02:00')
+        new \DateTime('2010-02-01 00:00:00'),
+        new \DateTime('2010-02-01 00:01:00'),
+        new \DateTime('2010-02-01 00:02:00')
       ));
 
     $drupal_state_service = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());
@@ -132,11 +137,11 @@ class StateTest extends UnitTestCase {
     // Configure the stub.
     $timestamp_stub->method('now')
       ->will($this->onConsecutiveCalls(
-        new DateTime('2010-02-01 00:00:00'),
-        new DateTime('2010-02-02 00:01:00'),
-        new DateTime('2010-02-03 00:02:00'),
-        new DateTime('2010-02-03 00:10:00'),
-        new DateTime('2010-02-03 00:15:00')
+        new \DateTime('2010-02-01 00:00:00'),
+        new \DateTime('2010-02-02 00:01:00'),
+        new \DateTime('2010-02-03 00:02:00'),
+        new \DateTime('2010-02-03 00:10:00'),
+        new \DateTime('2010-02-03 00:15:00')
       ));
 
     $drupal_state_service = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());

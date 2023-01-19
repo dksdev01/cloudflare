@@ -16,8 +16,23 @@ cloudflare.settings:
       type: boolean
       translatable: false
     zone_id:
-      type: string
+      type: sequence
       label: 'CloudFlare ZoneId corresponding to the site domain.'
+      translatable: false
+      sequence:
+        type: string
+        label: 'Zone ID'
+    zone_name:
+      type: string
+      label: 'Limit zones by name'
+      translatable: false
+    auth_using:
+      type: string
+      label: 'Method to authenticate against CloudFlare'
+      translatable: false
+    api_token:
+      type: string
+      label: 'ApiToken used to authenticate against CloudFlare'
       translatable: false
     apikey:
       type: string

@@ -7,11 +7,9 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\cloudflare\CloudFlareZoneInterface;
+use GuzzleHttp\Exception\RequestException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use CloudFlarePhpSdk\Exceptions\CloudFlareTimeoutException;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 
@@ -100,6 +98,7 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
     $this->cloudFlareComposerDependenciesMet = $composer_dependencies_met;
     $this->hasZoneId = !empty($this->config->get('zone_id'));
     $this->hasValidCredentials = $this->config->get('valid_credentials') === TRUE;
+    $this->zone_name = $this->config->get('zone_name');
 
     // This test should be unnecessary since this form should only ever be
     // reached when the 2 conditions are met. It's being done from an abundance
@@ -109,7 +108,7 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
         $this->zones = $this->zoneApi->listZones();
         $this->hasMultipleZones = count($this->zones) > 1;
       }
-      catch (CloudFlareTimeoutException $e) {
+      catch (RequestException $e) {
         $this->messenger()->addError($this->t('Unable to connect to CloudFlare. You will not be able to change the selected Zone.'));
       }
     }
@@ -169,8 +168,8 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
         return $section;
       }
 
-      $zone_id = $this->zones[0]->getZoneId();
-      $this->config->set('zone_id', $zone_id)->save();
+      $zone_id = $this->zones[0]->id;
+      $this->config->set('zone_id', [$zone_id])->save();
       $section['zone_selection_fieldset']['zone_selection'] = [
         '#markup' => $this->t('<p>Your CloudFlare account has a single zone which has been automatically selected for you.  Simply click "Finish" to save your settings.</p>'),
       ];
@@ -190,23 +189,20 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
    *   Form Api Render array for zone select.
    */
   public function buildZoneListing() {
-    $form_select_field = [];
     $zone_select = [];
 
     foreach ($this->zones as $zone) {
-      $zone_select[$zone->getZoneId()] = $zone->getName();
+      $zone_select[$zone->id] = $zone->name;
     }
 
     $form_select_field = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Zone'),
+      '#type' => 'select',
+      '#title' => $this->t('Select Zones'),
       '#disabled' => FALSE,
       '#options' => $zone_select,
-      '#description' => $this->t('Use the autocomplete to select your zone (top level domain for the site). The zone ID corresponding to the domain will then be saved in the field.'),
+      '#multiple' => TRUE,
       '#default_value' => $this->config->get('zone_id'),
-      '#empty_option' => '- None -',
-      '#empty_value' => '0',
-      '#autocomplete_route_name' => 'cloudflare.zone_autocomplete',
+      '#description' => $this->t('Select one or more zones (top level domain for the site). The zone ID corresponding to the domain will then be saved in the field.'),
     ];
 
     return $form_select_field;
@@ -217,34 +213,11 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     if ($this->hasMultipleZones) {
-      $zone_id = $form_state->getValue('zone_selection');
-      $this->config->set('zone_id', $zone_id)->save();
+      $zone_ids = $form_state->getValue('zone_selection');
+      $this->config->set('zone_id', $zone_ids)->save();
     }
 
     $form_state->setRedirect('cloudflare.admin_settings_form');
-  }
-
-  /**
-   * Retrieves suggestions for zone autocompletion.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current request.
-   *
-   * @return \Symfony\Component\HttpFoundation\JsonResponse
-   *   A JSON response containing autocomplete suggestions.
-   */
-  public function autocompleteZone(Request $request) {
-    $zone_autocomplete_text = $request->query->get('q');
-    $matches = [];
-
-    // Tracks if the current CloudFlare account has multiple zones.
-    /** @var \CloudFlarePhpSdk\ApiTypes\Zone\Zone $zone */
-    foreach ($this->zoneApi->listZones() as $zone) {
-      if (stripos($zone->getName(), $zone_autocomplete_text) === 0) {
-        $matches[] = ['value' => $zone->getZoneId(), 'label' => $zone->getName()];
-      }
-    }
-    return new JsonResponse($matches);
   }
 
 }

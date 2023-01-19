@@ -1,7 +1,6 @@
-## Getting Started (Experimental Cache Tag Support: Enterprise Tier ONLY)
-- `drush dl cloudflare purge ctools --yes`
--  From the root of your site run install composer dependencies:
-   `composer require d8-contrib-modules/cloudflarephpsdk "1.0.0-alpha5"`
+# Getting Started (Experimental Cache Tag Support: Enterprise Tier ONLY)
+
+- `composer require drupal/cloudflare drupal/purge`
 - To install: `drush en cloudflare cloudflarepurger purge purge_ui purge_drush purge_queuer_coretags purge_processor_cron --yes`
 - *Note*: If you try to install purge, cloudflare and cloudflare_purger all at once via the UI you will get a one time error on install.  This is known issue that is impacting other D8 modules. See
  [here](https://www.drupal.org/node/1387438)
