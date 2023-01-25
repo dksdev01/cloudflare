@@ -54,7 +54,7 @@ abstract class DiagnosticCheckTestBase extends UnitTestCase {
   /**
    * {@inheritdoc}
    */
-  public function setUp() {
+  public function setUp(): void {
     parent::setUp();
     $this->drupalState = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());
     $this->timestampStub = new Timestamp();

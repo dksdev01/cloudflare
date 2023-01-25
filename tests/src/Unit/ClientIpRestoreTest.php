@@ -33,7 +33,7 @@ class ClientIpRestoreTest extends UnitTestCase {
   /**
    * {@inheritdoc}
    */
-  public function setUp() {
+  public function setUp(): void {
     parent::setUp();
     $this->container = new ContainerBuilder();
     $this->container->set('string_translation', $this->getStringTranslationStub());

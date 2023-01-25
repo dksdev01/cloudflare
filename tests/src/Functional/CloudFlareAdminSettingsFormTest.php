@@ -17,7 +17,7 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['cloudflare', 'cloudflare_form_tester', 'ctools'];
+  protected static $modules = ['cloudflare', 'cloudflare_form_tester', 'ctools'];
 
   /**
    * {@inheritdoc}
@@ -41,7 +41,7 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
   /**
    * Setup the test.
    */
-  public function setUp() {
+  public function setUp(): void {
     parent::setUp();
 
     $this->adminUser = $this->drupalCreateUser(['administer cloudflare']);
