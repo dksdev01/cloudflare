@@ -57,7 +57,7 @@ abstract class DiagnosticCheckTestBase extends UnitTestCase {
   public function setUp(): void {
     parent::setUp();
     $this->drupalState = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());
-    $this->timestampStub = new Timestamp();
+    $this->timestampStub = $this->createMock('Drupal\cloudflare\Timestamp');
     $this->cloudflareState = new CloudFlareState($this->drupalState, $this->timestampStub);
 
     $this->container = new ContainerBuilder();

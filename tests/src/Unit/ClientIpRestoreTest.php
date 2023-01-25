@@ -83,9 +83,7 @@ class ClientIpRestoreTest extends UnitTestCase {
     }
 
     $config_factory = $this->createMock('\Drupal\Core\Config\ConfigFactoryInterface');
-    $config = $this->getMockBuilder('Drupal\Core\Config\Config')
-      ->disableOriginalConstructor()
-      ->getMock();
+    $config = $this->createMock('Drupal\Core\Config\Config');
 
     // Create a map of arguments to return values.
     $map = [

@@ -22,9 +22,7 @@ class StateTest extends UnitTestCase {
    * Tests tag count tracking functionality.
    */
   public function testTagPurgeDailyCountIncrements() {
-    $timestamp_stub = $this->getMockBuilder('Drupal\cloudflare\Timestamp')
-      ->disableOriginalConstructor()
-      ->getMock();
+    $timestamp_stub = $this->createMock('Drupal\cloudflare\Timestamp');
 
     // Configure the stub.
     $timestamp_stub->method('now')
@@ -59,9 +57,7 @@ class StateTest extends UnitTestCase {
    * Tests tag count boundary functionality.
    */
   public function testTagPurgeBoundaryIncrements() {
-    $timestamp_stub = $this->getMockBuilder('Drupal\cloudflare\Timestamp')
-      ->disableOriginalConstructor()
-      ->getMock();
+    $timestamp_stub = $this->createMock('Drupal\cloudflare\Timestamp');
 
     // Configure the stub.
     $timestamp_stub->method('now')
@@ -96,9 +92,7 @@ class StateTest extends UnitTestCase {
    * Tests tag count tracking functionality.
    */
   public function testApiRateLimitCountIncrements() {
-    $timestamp_stub = $this->getMockBuilder('Drupal\cloudflare\Timestamp')
-      ->disableOriginalConstructor()
-      ->getMock();
+    $timestamp_stub = $this->createMock('Drupal\cloudflare\Timestamp');
 
     // Configure the stub.
     $timestamp_stub->method('now')
@@ -130,9 +124,7 @@ class StateTest extends UnitTestCase {
    * Tests tag count boundary functionality.
    */
   public function testApiRateLimitBoundaryIncrements() {
-    $timestamp_stub = $this->getMockBuilder('Drupal\cloudflare\Timestamp')
-      ->disableOriginalConstructor()
-      ->getMock();
+    $timestamp_stub = $this->createMock('Drupal\cloudflare\Timestamp');
 
     // Configure the stub.
     $timestamp_stub->method('now')

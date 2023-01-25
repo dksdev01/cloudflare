@@ -26,9 +26,7 @@ class CredentialTestCheckTest extends DiagnosticCheckTestBase {
    */
   public function testCredentialTestCheck($cred_status, $expected_severity) {
     $config_factory = $this->createMock('\Drupal\Core\Config\ConfigFactoryInterface');
-    $config = $this->getMockBuilder('Drupal\Core\Config\Config')
-      ->disableOriginalConstructor()
-      ->getMock();
+    $config = $this->createMock('Drupal\Core\Config\Config');
     $config->expects($this->atLeastOnce())
       ->method('get')
       ->with('valid_credentials')
