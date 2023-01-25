@@ -2,8 +2,8 @@
 
 namespace Drupal\cloudflarepurger\EventSubscriber;
 
-use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Drupal\Core\Cache\CacheableResponseInterface;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
