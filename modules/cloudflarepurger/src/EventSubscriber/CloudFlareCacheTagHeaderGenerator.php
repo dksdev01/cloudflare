@@ -37,7 +37,7 @@ class CloudFlareCacheTagHeaderGenerator implements EventSubscriberInterface {
    *   The event to process.
    */
   public function onResponse(ResponseEvent $event) {
-    if (!$event->isMasterRequest()) {
+    if (!$event->isMainRequest()) {
       return;
     }
 
