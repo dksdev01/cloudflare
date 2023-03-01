@@ -80,6 +80,13 @@ class CloudFlareMiddleware implements HttpKernelInterface {
   protected $remoteAddrValidate;
 
   /**
+   * Host that bypasses CloudFlare.
+   *
+   * @var string
+   */
+  protected $bypassHost;
+
+  /**
    * Constructs the CloudflareMiddleware object.
    *
    * @param \Symfony\Component\HttpKernel\HttpKernelInterface $http_kernel
