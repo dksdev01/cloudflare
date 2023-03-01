@@ -304,6 +304,13 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
       '#default_value' => $config->get('client_ip_restore_enabled'),
     ];
 
+    $section['cloudflare_config']['remote_addr_validate'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Validate remote IP address'),
+      '#description' => $this->t('<strong>WARNING: disabling this can have security related consequences. Leave enabled if unsure.</strong> <br /> When "Restore Client Ip Address" above is enabled, this module will validate that the request is originating from <a href="https://www.cloudflare.com/ips/">Cloudflare IPs</a> before replacing it with the IP address provided in <a href="https://developers.cloudflare.com/fundamentals/get-started/reference/http-request-headers/#cf-connecting-ip">CF-Connecting-IP</a> header. For example, when your Drupal is running in Kubernetes, this remote IP might be of your ingress controller and not originating from Cloudflare, so you want to disable this validation.'),
+      '#default_value' => $config->get('remote_addr_validate'),
+    ];
+
     $section['cloudflare_config']['bypass_host'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Host to Bypass CloudFlare'),
@@ -430,6 +437,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
     // Deslash the host URL.
     $bypass_host = trim(rtrim($form_state->getValue('bypass_host'), "/"));
     $client_ip_restore_enabled = $form_state->getValue('client_ip_restore_enabled');
+    $remote_addr_validate = $form_state->getValue('remote_addr_validate');
 
     $config = $this->configFactory->getEditable('cloudflare.settings');
     $config
@@ -440,6 +448,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
       ->set('email', $email)
       ->set('valid_credentials', TRUE)
       ->set('bypass_host', $bypass_host)
+      ->set('remote_addr_validate', $remote_addr_validate)
       ->set('client_ip_restore_enabled', $client_ip_restore_enabled);
     $config->save();
   }

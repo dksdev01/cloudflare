@@ -1,33 +1,41 @@
 <?php
 
-namespace Drupal\cloudflare\EventSubscriber;
+namespace Drupal\cloudflare;
 
-use Drupal\Core\Url;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\Core\Url;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
-use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\IpUtils;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\IpUtils;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
  * Restores the true client Ip address.
  *
- * @see https://support.cloudflare.com/hc/en-us/articles/200170986-How-does-CloudFlare-handle-HTTP-Request-headers-
+ * @see https://developers.cloudflare.com/fundamentals/get-started/reference/http-request-headers/
  */
-class ClientIpRestore implements EventSubscriberInterface {
+class CloudFlareMiddleware implements HttpKernelInterface {
+
   use StringTranslationTrait;
 
   const CLOUDFLARE_RANGE_KEY = 'cloudflare_range_key';
   const CLOUDFLARE_CLIENT_IP_RESTORE_ENABLED = 'client_ip_restore_enabled';
+  const CLOUDFLARE_REMOTE_ADDR_VALIDATE = 'remote_addr_validate';
   const CLOUDFLARE_BYPASS_HOST = 'bypass_host';
   const IPV4_ENDPOINTS_URL = 'https://www.cloudflare.com/ips-v4';
   const IPV6_ENDPOINTS_URL = 'https://www.cloudflare.com/ips-v6';
+
+  /**
+   * The kernel.
+   *
+   * @var \Symfony\Component\HttpKernel\HttpKernelInterface
+   */
+  protected $httpKernel;
 
   /**
    * Cache backend service.
@@ -65,57 +73,65 @@ class ClientIpRestore implements EventSubscriberInterface {
   protected $isClientIpRestoreEnabled;
 
   /**
-   * Constructs a ClientIpRestore.
+   * Validate remote IP address.
    *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The factory for configuration objects.
-   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
-   *   Cache backend.
-   * @param \GuzzleHttp\ClientInterface $http_client
-   *   A Guzzle client object.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger instance.
+   * @var bool
    */
-  public function __construct(ConfigFactoryInterface $config_factory, CacheBackendInterface $cache, ClientInterface $http_client, LoggerInterface $logger) {
+  protected $remoteAddrValidate;
+
+  /**
+   * Constructs the CloudflareMiddleware object.
+   *
+   * @param \Symfony\Component\HttpKernel\HttpKernelInterface $http_kernel
+   *   The decorated kernel.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   Configuration factory.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
+   *   Cache.
+   * @param \GuzzleHttp\ClientInterface $http_client
+   *   HTTP client.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   Logger.
+   */
+  public function __construct(HttpKernelInterface $http_kernel, ConfigFactoryInterface $config_factory, CacheBackendInterface $cache, ClientInterface $http_client, LoggerInterface $logger) {
+    $this->httpKernel = $http_kernel;
     $this->httpClient = $http_client;
     $this->cache = $cache;
     $this->config = $config_factory->get('cloudflare.settings');
     $this->logger = $logger;
     $this->isClientIpRestoreEnabled = $this->config->get(self::CLOUDFLARE_CLIENT_IP_RESTORE_ENABLED);
+    $this->remoteAddrValidate = $this->config->get(self::CLOUDFLARE_REMOTE_ADDR_VALIDATE);
     $this->bypassHost = $this->config->get(self::CLOUDFLARE_BYPASS_HOST);
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
-    $events[KernelEvents::REQUEST][] = ['onRequest', 20];
-    return $events;
-  }
-
-  /**
-   * Restores the origination client IP delivered to Drupal from CloudFlare.
-   */
-  public function onRequest(GetResponseEvent $event) {
-    if (!$this->isClientIpRestoreEnabled) {
-      return;
+  public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
+    if ($type !== self::MASTER_REQUEST) {
+      return $this->httpKernel->handle($request, $type, $catch);
     }
-    $current_request = $event->getRequest();
-    $cf_connecting_ip = $current_request->server->get('HTTP_CF_CONNECTING_IP');
+
+    if (!$this->isClientIpRestoreEnabled) {
+      return $this->httpKernel->handle($request, $type, $catch);
+    }
+
+    $cf_connecting_ip = $request->server->get('HTTP_CF_CONNECTING_IP', '');
     $has_http_cf_connecting_ip = !empty($cf_connecting_ip);
+    $remoteAddrValidate = $this->remoteAddrValidate;
     $has_bypass_host = !empty($this->bypassHost);
-    $client_ip = $current_request->getClientIp();
-    $incoming_uri = $current_request->getHost();
+    $client_ip = $request->getClientIp();
+    $incoming_uri = $request->getHost();
     $request_expected_to_bypass_cloudflare = $has_bypass_host && $this->bypassHost == $incoming_uri;
 
     if ($request_expected_to_bypass_cloudflare) {
-      return;
+      return $this->httpKernel->handle($request, $type, $catch);
     }
 
     if (!$has_http_cf_connecting_ip) {
       $message = $this->t("Request came through without being routed through CloudFlare.");
       $this->logger->warning($message);
-      return;
+      return $this->httpKernel->handle($request, $type, $catch);
     }
 
     $has_ip_already_changed = $client_ip == $cf_connecting_ip;
@@ -127,27 +143,38 @@ class ClientIpRestore implements EventSubscriberInterface {
       $link_to_settings = $url_to_settings->getInternalPath();
       $message = $this->t('Request has already been updated.  This functionality should be deactivated. Please go <a href="@link_to_settings">here</a> to disable "Restore Client Ip Address".', ['@link_to_settings' => $link_to_settings]);
       $this->logger->warning($message);
-      return;
+      return $this->httpKernel->handle($request, $type, $catch);
     }
 
     $cloudflare_ipranges = $this->getCloudFlareIpRanges();
     $request_originating_from_cloudflare = IpUtils::checkIp($client_ip, $cloudflare_ipranges);
 
-    if ($has_http_cf_connecting_ip && !$request_originating_from_cloudflare) {
+    if ($remoteAddrValidate && $has_http_cf_connecting_ip && !$request_originating_from_cloudflare) {
       $message = $this->t("Client IP of @client_ip does not match a known CloudFlare IP but there is HTTP_CF_CONNECTING_IP of @cf_connecting_ip.", [
         '@cf_connecting_ip' => $cf_connecting_ip,
         '@client_ip' => $client_ip,
       ]);
       $this->logger->warning($message);
-      return;
+      return $this->httpKernel->handle($request, $type, $catch);
     }
 
     // As the changed remote address will make it impossible to determine
-    // a trusted proxy, we need to make sure we set the right protocal as well.
-    // @see \Symfony\Component\HttpFoundation\Request::isSecure()
-    $event->getRequest()->server->set('HTTPS', $event->getRequest()->isSecure() ? 'on' : 'off');
-    $event->getRequest()->server->set('REMOTE_ADDR', $cf_connecting_ip);
-    $event->getRequest()->overrideGlobals();
+    // a trusted proxy, we need to make sure we set the right protocol as well.
+    // Using incoming request to determine scheme that should be used will not
+    // work in configurations where TLS is off-loaded before the server that
+    // hosts Drupal, but Cloudflare tells us if original request was secure.
+    // @see https://developers.cloudflare.com/fundamentals/get-started/reference/http-request-headers/#cf-visitor
+    $cf_visitor = json_decode($request->server->get('HTTP_CF_VISITOR', '{}'), TRUE);
+    // Use current request as a fall back.
+    $is_secure = $request->isSecure();
+    if (!empty($cf_visitor['scheme'])) {
+      $is_secure = strtolower($cf_visitor['scheme']) === 'https';
+    }
+    $request->server->set('HTTPS', $is_secure ? 'on' : 'off');
+    $request->server->set('REMOTE_ADDR', $cf_connecting_ip);
+    $request->overrideGlobals();
+
+    return $this->httpKernel->handle($request, $type, $catch);
   }
 
   /**

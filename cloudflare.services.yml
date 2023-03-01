@@ -21,8 +21,10 @@ services:
   logger.channel.cloudflare:
     parent: logger.channel_base
     arguments: ['cloudflare']
-  cloudflare.clientiprestore:
-    class: Drupal\cloudflare\EventSubscriber\ClientIpRestore
+
+  http_middleware.cloudflare:
+    class: Drupal\cloudflare\CloudFlareMiddleware
     arguments: ['@config.factory', '@cache.data', '@http_client', '@logger.channel.cloudflare']
     tags:
-      - { name: event_subscriber }
+      # Same priority as reverse proxy middleware (http_middleware.reverse_proxy).
+      - { name: http_middleware, priority: 300 }

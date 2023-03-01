@@ -2,10 +2,10 @@
 
 namespace Drupal\Tests\cloudflare\Unit;
 
+use Drupal\cloudflare\CloudFlareMiddleware;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\Cache\MemoryBackend;
-use Drupal\cloudflare\EventSubscriber\ClientIpRestore;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LoggerInterface;
@@ -18,7 +18,7 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  *
  * @group cloudflare
  *
- * @covers \Drupal\cloudflare\EventSubscriber\ClientIpRestffore
+ * @covers \Drupal\cloudflare\CloudFlareMiddleware
  */
 class ClientIpRestoreTest extends UnitTestCase {
   use StringTranslationTrait;
@@ -90,13 +90,17 @@ class ClientIpRestoreTest extends UnitTestCase {
     // Create a map of arguments to return values.
     $map = [
       [
-        ClientIpRestore::CLOUDFLARE_BYPASS_HOST,
+        CloudFlareMiddleware::CLOUDFLARE_BYPASS_HOST,
         $bypass_host
       ],
       [
-        ClientIpRestore::CLOUDFLARE_CLIENT_IP_RESTORE_ENABLED,
+        CloudFlareMiddleware::CLOUDFLARE_CLIENT_IP_RESTORE_ENABLED,
         $client_ip_restore_enabled,
       ],
+      [
+        CloudFlareMiddleware::CLOUDFLARE_REMOTE_ADDR_VALIDATE,
+        TRUE,
+      ]
     ];
     $config->expects($this->atLeastOnce())
       ->method('get')
@@ -124,10 +128,12 @@ class ClientIpRestoreTest extends UnitTestCase {
     );
     $cf_ips = array_map('trim', $cf_ips);
 
-    $cache_backend = new MemoryBackend('foo');
-    $cache_backend->set(ClientIpRestore::CLOUDFLARE_RANGE_KEY, $cf_ips);
+    $cache_backend = new MemoryBackend();
+    $cache_backend->set(CloudFlareMiddleware::CLOUDFLARE_RANGE_KEY, $cf_ips);
+    $kernel = $this->createMock('Symfony\Component\HttpKernel\HttpKernelInterface');
 
-    $client_ip_restore = new ClientIpRestore(
+    $cf_middleware = new CloudFlareMiddleware(
+      $kernel,
       $config_factory,
       $cache_backend,
       $this->createMock(ClientInterface::class),
@@ -135,7 +141,6 @@ class ClientIpRestoreTest extends UnitTestCase {
     );
 
     $request = Request::create('/test', 'get');
-    $kernel = $this->createMock('Symfony\Component\HttpKernel\HttpKernelInterface');
 
     if (!empty($cf_header)) {
       $request->server->set('HTTP_CF_CONNECTING_IP', $cf_header);
@@ -150,14 +155,12 @@ class ClientIpRestoreTest extends UnitTestCase {
     }
 
     $request->overrideGlobals();
-    $event = new RequestEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
-    $client_ip_restore->onRequest($event);
+    $cf_middleware->handle($request, HttpKernelInterface::MASTER_REQUEST);
     $this->assertEquals($expected_client_ip, $request->getClientIp());
-
   }
 
   /**
-   * Provider for testing ClientIpRestoreProvider.
+   * Provider for testing testEnabledClientIpRestoreProvider.
    *
    * @return array
    *   Test Data to simulate incoming request and the expected results..

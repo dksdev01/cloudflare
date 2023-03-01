@@ -7,6 +7,10 @@ cloudflare.settings:
       label: 'Restore Client Ip Address.'
       type: boolean
       translatable: false
+    remote_addr_validate:
+      label: 'Validate remote IP address'
+      type: boolean
+      translatable: false
     bypass_host:
       label: 'Host to Bypass CloudFlare.  Helps suppress log warnings regarding requests bypassing CloudFlare.'
       type: string

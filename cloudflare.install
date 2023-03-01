@@ -92,3 +92,12 @@ function cloudflare_update_8004(&$sandbox) {
     $config->set('auth_using', 'key')->save();
   }
 }
+
+/**
+ * Set `remote_addr_validate` on existing installations.
+ */
+function cloudflare_update_8005() {
+  \Drupal::configFactory()->getEditable('cloudflare.settings')->set('remote_addr_validate', TRUE)->save();
+
+  return 'Cloudflare configuration ( cloudflare.settings ) was successfully updated.';
+}
