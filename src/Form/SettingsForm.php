@@ -2,6 +2,7 @@
 
 namespace Drupal\cloudflare\Form;
 
+use Cloudflare\API\Adapter\ResponseException;
 use Drupal\Component\Utility\EmailValidator;
 use Egulias\EmailValidator\EmailValidator as EguliasEmailValidator;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -371,6 +372,10 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
       }
       catch (RequestException $e) {
         $form_state->setErrorByName('apikey', $this->t('Unable to connect to CloudFlare in order to validate credentials. Request error: @error', ['@error' => $e->getMessage()]));
+        return;
+      }
+      catch (ResponseException $e) {
+        $form_state->setErrorByName('apikey', $this->t('Unable to connect to validate Cloudflare credentials. Request error: @error', ['@error' => $e->getMessage()]));
         return;
       }
     }
