@@ -12,6 +12,7 @@ use GuzzleHttp\Exception\RequestException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
@@ -114,8 +115,8 @@ class CloudFlareMiddleware implements HttpKernelInterface {
   /**
    * {@inheritdoc}
    */
-  public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = TRUE) {
-    if ($type !== self::MASTER_REQUEST) {
+  public function handle(Request $request, $type = self::MAIN_REQUEST, bool $catch = TRUE): Response {
+    if ($type !== self::MAIN_REQUEST) {
       return $this->httpKernel->handle($request, $type, $catch);
     }
 
