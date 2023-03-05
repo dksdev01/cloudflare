@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * @group cloudflare
  */
+#[\AllowDynamicProperties]
 class VariousUseCasesTest extends BrowserTestBase {
 
   /**

@@ -14,6 +14,7 @@ use GuzzleHttp\Psr7\Response;
  *
  * @group cloudflare
  */
+#[\AllowDynamicProperties]
 class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
 
   /**

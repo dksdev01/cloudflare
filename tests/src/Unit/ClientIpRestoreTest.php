@@ -153,6 +153,7 @@ class ClientIpRestoreTest extends UnitTestCase {
     }
 
     $request->overrideGlobals();
+    // @todo Update the constant to MAIN_REQUEST once support for Drupal 9 is dropped.
     $cf_middleware->handle($request, HttpKernelInterface::MASTER_REQUEST);
     $this->assertEquals($expected_client_ip, $request->getClientIp());
   }

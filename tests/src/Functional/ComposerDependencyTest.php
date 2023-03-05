@@ -11,6 +11,7 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group cloudflare
  */
+#[\AllowDynamicProperties]
 class ComposerDependencyTest extends BrowserTestBase {
 
   /**
