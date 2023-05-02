@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * CloudFlare currently has a rate limit of 1200 Api calls every 5 minutes.
  *
- * @see https://api.cloudflare.com/#requests
+ * @see https://developers.cloudflare.com/fundamentals/api/reference/limits/
  *
  * @PurgeDiagnosticCheck(
  *   id = "cloudflare_api_rate_limit_check",
@@ -92,22 +92,22 @@ class ApiRateLimitCheck extends DiagnosticCheckBase implements DiagnosticCheckIn
     $daily_warning_level = .75 * self::API_RATE_LIMIT;
 
     $message_variables = [
-      ':rate_limit' => self::API_RATE_LIMIT,
-      ':$rate_count' => $rate_count,
+      '@rate_limit' => self::API_RATE_LIMIT,
+      '@rate_count' => $rate_count,
     ];
 
     if ($rate_count >= self::API_RATE_LIMIT) {
-      $this->recommendation = $this->t('Exceeded Api limit of :$rate_count/:rate_limit limit purges/day.', $message_variables);
+      $this->recommendation = $this->t('Exceeded API limit of @rate_count/@rate_limit every 5 minutes.', $message_variables);
       return self::SEVERITY_ERROR;
     }
 
     elseif ($rate_count >= $daily_warning_level) {
-      $this->recommendation = $this->t('Approaching Api limit of :$rate_count/:rate_limit limit purges/day.', $message_variables);
+      $this->recommendation = $this->t('Approaching API limit of @rate_count/@rate_limit every 5 minutes.', $message_variables);
       return self::SEVERITY_WARNING;
     }
 
     elseif ($rate_count < $daily_warning_level) {
-      $this->recommendation = $this->t('Site is safely below the rate limit of :rate_limit every 5 minutes.', $message_variables);
+      $this->recommendation = $this->t('Site is safely below ( @rate_count ) the rate limit of @rate_limit every 5 minutes.', $message_variables);
       return self::SEVERITY_OK;
     }
   }
