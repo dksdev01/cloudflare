@@ -3,9 +3,9 @@
 namespace Drupal\cloudflarepurger\EventSubscriber;
 
 use Drupal\Core\Cache\CacheableResponseInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Generates a 'Cache-Tag' header in the format expected by CloudFlare.

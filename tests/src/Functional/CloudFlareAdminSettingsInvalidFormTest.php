@@ -3,8 +3,8 @@
 namespace Drupal\Tests\cloudflare\Functional;
 
 use Drupal\cloudflare_form_tester\Mocks\ComposerDependenciesCheckMock;
-use Drupal\Core\Url;
 use Drupal\cloudflare_form_tester\Mocks\ZoneMock;
+use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Response;
@@ -14,7 +14,6 @@ use GuzzleHttp\Psr7\Response;
  *
  * @group cloudflare
  */
-#[\AllowDynamicProperties]
 class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
 
   /**
@@ -40,6 +39,13 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
    * @var string
    */
   protected $route = 'cloudflare.admin_settings_form';
+
+  /**
+   * The form URL.
+   *
+   * @var \Drupal\Core\Url
+   */
+  protected Url $formUrl;
 
   /**
    * Setup the test.
@@ -98,6 +104,7 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
 
     $this->drupalLogin($this->adminUser);
     $edit = [
+      // cspell:disable-next-line
       'apikey' => '68ow48650j63zfzx1w9jd29cr367u0ezb6a4g',
       'email' => 'test@test.com',
     ];
@@ -112,6 +119,7 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
   public function testUpperCaseInvalidCredentials() {
     ZoneMock::mockAssertValidCredentials(TRUE);
     $edit = [
+      // cspell:disable-next-line
       'apikey' => 'fDK5M9sf51x6CEAspHSUYM4vt40m5XC2T6i1K',
       'email' => 'test@test.com',
     ];
@@ -127,6 +135,7 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
   public function testInvalidKeyLength() {
     ZoneMock::mockAssertValidCredentials(TRUE);
     $edit = [
+      // cspell:disable-next-line
       'apikey' => '68ow48650j63zfzx1w9jd29cr367u0ezb6a4g0',
       'email' => 'test@test.com',
     ];
@@ -143,6 +152,7 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
     ZoneMock::mockAssertValidCredentials(TRUE);
     ComposerDependenciesCheckMock::mockComposerDependenciesMet(FALSE);
     $edit = [
+      // cspell:disable-next-line
       'apikey' => '!8ow48650j63zfzx1w9jd29cr367u0ezb6a4g',
       'email' => 'test@test.com',
     ];

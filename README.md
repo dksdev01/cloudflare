@@ -32,8 +32,8 @@ Special thanks to Wim Leers and Niels Van Mourik for their collaboration and sup
   if you login to your site then authenticated pages can get cached by the CDN.  So anonymous users see what appear to
   be authenticated pages (they are not really authenticated).
   To work around we recommend that you setup a separate domain for authenticated
-  users. e.g if your domain is `yourdomain.com` then setup a second domain for
-  authenticated users that bypasses cloudflare e.g `edit.yourdomain.com`. In this setup block access to /user on your
+  users. e.g if your domain is `your_domain.com` then setup a second domain for
+  authenticated users that bypasses cloudflare e.g `edit.your_domain.com`. In this setup block access to /user on your
   public domain via .htaccess rules.
 - By default CloudFlare will cache static resources but not HTML. You need to add a page rule to cache all the things.
 

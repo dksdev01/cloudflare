@@ -2,8 +2,8 @@
 
 namespace Drupal\Tests\cloudflarepurger\Unit;
 
-use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
 use Drupal\cloudflarepurger\Plugin\Purge\DiagnosticCheck\CredentialCheck;
+use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
 
 /**
  * Tests that purge_requirements() passes on our diagnostic checks.

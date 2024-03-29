@@ -2,9 +2,9 @@
 
 namespace Drupal\Tests\cloudflarepurger\Unit;
 
-use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
 use Drupal\cloudflare\State;
 use Drupal\cloudflarepurger\Plugin\Purge\DiagnosticCheck\DailyTagPurgeLimitCheck;
+use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
 
 /**
  * Tests that purge_requirements() passes on our diagnostic checks.

@@ -2,10 +2,10 @@
 
 namespace Drupal\cloudflarepurger\Plugin\Purge\DiagnosticCheck;
 
+use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
+use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckBase;
 use Drupal\purge\Plugin\Purge\DiagnosticCheck\DiagnosticCheckInterface;
-use Drupal\cloudflare\CloudFlareStateInterface;
-use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

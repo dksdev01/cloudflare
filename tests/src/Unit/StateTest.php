@@ -2,12 +2,10 @@
 
 namespace Drupal\Tests\cloudflare\Unit;
 
-use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
-use Drupal\Tests\UnitTestCase;
-use Drupal\Core\Cache\MemoryBackend;
-use Drupal\Core\Lock\NullLockBackend;
-use Drupal\Core\State\State as CoreState;
 use Drupal\cloudflare\State as CloudFlareState;
+use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
+use Drupal\Core\State\State as CoreState;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * Tests functionality of CloudFlareState object.
@@ -102,7 +100,7 @@ class StateTest extends UnitTestCase {
         new \DateTime('2010-02-01 00:02:00')
       ));
 
-    $drupal_state_service = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());
+    $drupal_state_service = new CoreState(new KeyValueMemoryFactory());
     $cloudflare_state = new CloudFlareState($drupal_state_service, $timestamp_stub);
     $initial_count = $cloudflare_state->getTagDailyCount();
     $this->assertEquals(0, $initial_count, 'Tested state with empty counts');
@@ -136,7 +134,7 @@ class StateTest extends UnitTestCase {
         new \DateTime('2010-02-03 00:15:00')
       ));
 
-    $drupal_state_service = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());
+    $drupal_state_service = new CoreState(new KeyValueMemoryFactory());
     $cloudflare_state = new CloudFlareState($drupal_state_service, $timestamp_stub);
     $initial_count = $cloudflare_state->getApiRateCount();
     $this->assertEquals(0, $initial_count, 'Tested state with empty counts');

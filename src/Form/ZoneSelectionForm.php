@@ -2,19 +2,20 @@
 
 namespace Drupal\cloudflare\Form;
 
+use Drupal\cloudflare\CloudFlareZoneInterface;
+use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\cloudflare\CloudFlareZoneInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Link;
-use Drupal\Core\Url;
 
 /**
- * Class ZoneSelectionForm.
+ * Form for selecting a CloudFlare zone.
  *
  * @package Drupal\cloudflare\Form
  */
@@ -63,6 +64,20 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
   protected $hasMultipleZones;
 
   /**
+   * The cloudflare settings config.
+   *
+   * @var \Drupal\Core\Config\Config
+   */
+  protected Config $config;
+
+  /**
+   * Whether the credentials have been validated.
+   *
+   * @var bool
+   */
+  protected bool $hasValidCredentials;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -96,9 +111,7 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
     $this->zoneApi = $zone_api;
     $this->logger = $logger;
     $this->cloudFlareComposerDependenciesMet = $composer_dependencies_met;
-    $this->hasZoneId = !empty($this->config->get('zone_id'));
     $this->hasValidCredentials = $this->config->get('valid_credentials') === TRUE;
-    $this->zone_name = $this->config->get('zone_name');
 
     // This test should be unnecessary since this form should only ever be
     // reached when the 2 conditions are met. It's being done from an abundance
@@ -112,15 +125,6 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
         $this->messenger()->addError($this->t('Unable to connect to CloudFlare. You will not be able to change the selected Zone.'));
       }
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getEditableConfigNames() {
-    return [
-      'cloudflare.zoneselection',
-    ];
   }
 
   /**

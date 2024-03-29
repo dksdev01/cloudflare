@@ -2,9 +2,9 @@
 
 namespace Drupal\cloudflare_form_tester\Mocks;
 
-use Psr\Log\LoggerInterface;
-use Drupal\cloudflare\Exception\ComposerDependencyException;
 use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
+use Drupal\cloudflare\Exception\ComposerDependencyException;
+use Psr\Log\LoggerInterface;
 
 /**
  * Tests that composer dependencies are met.

@@ -2,8 +2,8 @@
 
 namespace Drupal\cloudflare;
 
-use Psr\Log\LoggerInterface;
 use Drupal\cloudflare\Exception\ComposerDependencyException;
+use Psr\Log\LoggerInterface;
 
 /**
  * Tests that composer dependencies are met.
@@ -47,8 +47,8 @@ class ComposerDependenciesCheck implements CloudFlareComposerDependenciesCheckIn
    * {@inheritdoc}
    */
   public function check() {
-    // This check will help prevent multiple redundant criticals from being
-    // logged.
+    // This check will help prevent multiple redundant critical errors from
+    // being logged.
     if (!is_null(self::$areDependenciesMet)) {
       return self::$areDependenciesMet;
     }

@@ -3,8 +3,8 @@
 namespace Drupal\Tests\cloudflare\Functional;
 
 use Drupal\cloudflare_form_tester\Mocks\ComposerDependenciesCheckMock;
-use Drupal\Core\Url;
 use Drupal\cloudflare_form_tester\Mocks\ZoneMock;
+use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -12,7 +12,6 @@ use Drupal\Tests\BrowserTestBase;
  *
  * @group cloudflare
  */
-#[\AllowDynamicProperties]
 class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
 
   /**
@@ -40,6 +39,13 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
   protected $route = 'cloudflare.admin_settings_form';
 
   /**
+   * The form URL.
+   *
+   * @var \Drupal\Core\Url
+   */
+  protected Url $formUrl;
+
+  /**
    * Setup the test.
    */
   public function setUp(): void {
@@ -58,6 +64,7 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
    */
   public function testValidCredentials() {
     $edit = [
+      // cspell:disable-next-line
       'apikey' => '68ow48650j63zfzx1w9jd29cr367u0ezb6a4g',
       'email' => 'test@test.com',
     ];
@@ -65,9 +72,10 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
     $this->submitForm($edit, 'Next');
     $this->assertSession()->addressEquals('/admin/config/services/cloudflare/two?js=nojs');
     $this->submitForm([], 'Finish');
+    // cspell:disable-next-line
     $this->assertSession()->responseContains('68ow48650j63zfzx1w9jd29cr367u0ezb6a4g');
     $this->assertSession()->responseContains('test@test.com');
-    $this->assertSession()->responseContains('testdomain.com');
+    $this->assertSession()->responseContains('test-domain.com');
   }
 
   /**
@@ -75,6 +83,7 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
    */
   public function testMultiZoneSelection() {
     $edit = [
+      // cspell:disable-next-line
       'apikey' => '68ow48650j63zfzx1w9jd29cr367u0ezb6a4g',
       'email' => 'test@test.com',
     ];
@@ -83,8 +92,9 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
     $this->submitForm($edit, 'Next');
     $this->assertSession()->addressEquals('/admin/config/services/cloudflare/two?js=nojs');
     $this->submitForm(['zone_selection[]' => '123456789999'], 'Finish');
+    // cspell:disable-next-line
     $this->assertSession()->responseContains('68ow48650j63zfzx1w9jd29cr367u0ezb6a4g');
-    $this->assertSession()->responseContains('testdomain2.com');
+    $this->assertSession()->responseContains('test-domain2.com');
   }
 
   /**
@@ -92,6 +102,7 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
    */
   public function testInvalidBypassHostWithHttps() {
     $edit = [
+      // cspell:disable-next-line
       'apikey' => '68ow48650j63zfzx1w9jd29cr367u0ezb6a4g',
       'email' => 'test@test.com',
       'client_ip_restore_enabled' => TRUE,
@@ -107,6 +118,7 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
    */
   public function testInvalidBypassHostWithHttp() {
     $edit = [
+      // cspell:disable-next-line
       'apikey' => '68ow48650j63zfzx1w9jd29cr367u0ezb6a4g',
       'email' => 'test@test.com',
       'client_ip_restore_enabled' => TRUE,
@@ -122,6 +134,7 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
    */
   public function testInvalidBypassHost() {
     $edit = [
+      // cspell:disable-next-line
       'apikey' => '68ow48650j63zfzx1w9jd29cr367u0ezb6a4g',
       'email' => 'test@test.com',
       'client_ip_restore_enabled' => TRUE,

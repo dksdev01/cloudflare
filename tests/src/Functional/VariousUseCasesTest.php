@@ -9,12 +9,16 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Test authentication support and intermediaries.
  *
- * Based on Drupal\Tests\system\Functional\Session\SessionHttpsTest::testHttpsSession().
+ * Based on Drupal's functional SessionHttpsTest::testHttpsSession().
  *
  * @group cloudflare
  */
-#[\AllowDynamicProperties]
 class VariousUseCasesTest extends BrowserTestBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * {@inheritdoc}
@@ -27,12 +31,6 @@ class VariousUseCasesTest extends BrowserTestBase {
    * @var string
    */
   protected $secureSessionName;
-
-  /**
-   * {@inheritdoc}
-   */
-  protected $defaultTheme = 'stark';
-
 
   /**
    * {@inheritdoc}
@@ -53,14 +51,16 @@ class VariousUseCasesTest extends BrowserTestBase {
   }
 
   /**
+   * Test user login for intermediaries and HTTPS over Cloudflare.
+   *
    * Test that authenticated user will receive session cookie with secure flag
    * set and will be redirected to the HTTPS website version when connected over
    * CloudFlare in flexible encryption mode or when there are intermediaries
    * between CloudFlare and the origin server.
    */
-  public function testAutheticationSupport() {
-    $this->assertSame(TRUE, $this->config('cloudflare.settings')->get('client_ip_restore_enabled'), 'Restore client IP address function is enabled');
-    $this->assertSame(FALSE, $this->config('cloudflare.settings')->get('remote_addr_validate'), 'Validation of remote IP address is disabled');
+  public function testAuthenticationSupport() {
+    $this->assertTrue($this->config('cloudflare.settings')->get('client_ip_restore_enabled'), 'Restore client IP address function is enabled');
+    $this->assertFalse($this->config('cloudflare.settings')->get('remote_addr_validate'), 'Validation of remote IP address is disabled');
 
     $account = $this->drupalCreateUser(['access administration pages']);
     $guzzle_cookie_jar = $this->getGuzzleCookieJar();
@@ -88,7 +88,7 @@ class VariousUseCasesTest extends BrowserTestBase {
       'headers' => [
         'CF-Connecting-IP' => '127.0.0.11',
         'CF-Visitor' => '{"scheme":"https"}',
-      ]
+      ],
     ]);
 
     $this->assertEquals(303, $response->getStatusCode(), 'User is redirected to the profile page');
@@ -113,42 +113,40 @@ class VariousUseCasesTest extends BrowserTestBase {
     return CookieJar::fromArray($cookies, $this->baseUrl);
   }
 
-
   /**
    * Gets the form build ID for the user login form.
    *
    * @return string
    *   The form build ID for the user login form.
    */
-  protected function getUserLoginFormBuildId() {
+  protected function getUserLoginFormBuildId(): string {
     $this->drupalGet('user/login');
     return (string) $this->getSession()->getPage()->findField('form_build_id');
   }
 
-
   /**
    * Builds a URL for submitting a mock HTTPS request to HTTP test environments.
    *
-   * @param $url
+   * @param string $url
    *   A Drupal path such as 'user/login'.
    *
    * @return string
    *   URL prepared for the https.php mock front controller.
    */
-  protected function httpsUrl($url) {
+  protected function httpsUrl(string $url): string {
     return 'core/modules/system/tests/https.php/' . $url;
   }
 
   /**
    * Builds a URL for submitting a mock HTTP request to HTTPS test environments.
    *
-   * @param $url
+   * @param string $url
    *   A Drupal path such as 'user/login'.
    *
    * @return string
    *   URL prepared for the http.php mock front controller.
    */
-  protected function httpUrl($url) {
+  protected function httpUrl(string $url): string {
     return 'core/modules/system/tests/http.php/' . $url;
   }
 

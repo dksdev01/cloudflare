@@ -7,9 +7,9 @@ use Drupal\ctools\Wizard\FormWizardBase;
 /**
  * Class ConfigWizard used for entering CloudFlare config.
  *
- * The wizard apperoach is used because a user first must enter their
- * credentials before selecting a zone. The different pages of a wizard
- * supports this workflow.
+ * The wizard approach is used because a user first must enter their credentials
+ * before selecting a zone. The different pages of a wizard supports this
+ * workflow.
  */
 class ConfigWizard extends FormWizardBase {
 

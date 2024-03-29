@@ -2,11 +2,12 @@
 
 namespace Drupal\cloudflare_form_tester\Mocks;
 
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\cloudflare\CloudFlareZoneInterface;
-use Drupal\cloudflare\CloudFlareStateInterface;
+// cspell:ignore multizone singlezone
 use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
+use Drupal\cloudflare\CloudFlareStateInterface;
+use Drupal\cloudflare\CloudFlareZoneInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -98,7 +99,7 @@ class ZoneMock implements CloudFlareZoneInterface {
     $cloudflare_zone_settings = [];
 
     $cloudflare_zone_settings['id'] = '123456789';
-    $cloudflare_zone_settings['name'] = 'testdomain.com';
+    $cloudflare_zone_settings['name'] = 'test-domain.com';
     $cloudflare_zone_settings['status'] = 'Active';
     $cloudflare_zone_settings['paused'] = FALSE;
     $cloudflare_zone_settings['type'] = 'zone';
@@ -114,7 +115,7 @@ class ZoneMock implements CloudFlareZoneInterface {
     $cloudflare_zone_settings['plan'] = 'EMPTY';
 
     $cloudflare_zone_settings2['id'] = '123456789999';
-    $cloudflare_zone_settings2['name'] = 'testdomain2.com';
+    $cloudflare_zone_settings2['name'] = 'test-domain2.com';
     $cloudflare_zone_settings2['status'] = 'Active';
     $cloudflare_zone_settings2['paused'] = FALSE;
     $cloudflare_zone_settings2['type'] = 'zone';

@@ -2,16 +2,15 @@
 
 namespace Drupal\Tests\cloudflare\Unit;
 
+// cspell:ignore cftest
 use Drupal\cloudflare\CloudFlareMiddleware;
+use Drupal\Core\Cache\MemoryBackend;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Cache\MemoryBackend;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\ClientInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\Event\RequestEvent;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
 
 /**
  * Tests functionality of CloudFlareState object.
@@ -29,6 +28,13 @@ class ClientIpRestoreTest extends UnitTestCase {
    * @var \Drupal\Core\DependencyInjection\ContainerBuilder
    */
   protected $container;
+
+  /**
+   * The url generator.
+   *
+   * @var \Drupal\Core\Routing\UrlGeneratorInterface|\PHPUnit\Framework\MockObject\MockObject
+   */
+  protected $urlGenerator;
 
   /**
    * {@inheritdoc}
@@ -89,7 +95,7 @@ class ClientIpRestoreTest extends UnitTestCase {
     $map = [
       [
         CloudFlareMiddleware::CLOUDFLARE_BYPASS_HOST,
-        $bypass_host
+        $bypass_host,
       ],
       [
         CloudFlareMiddleware::CLOUDFLARE_CLIENT_IP_RESTORE_ENABLED,
@@ -98,7 +104,7 @@ class ClientIpRestoreTest extends UnitTestCase {
       [
         CloudFlareMiddleware::CLOUDFLARE_REMOTE_ADDR_VALIDATE,
         TRUE,
-      ]
+      ],
     ];
     $config->expects($this->atLeastOnce())
       ->method('get')
@@ -153,8 +159,7 @@ class ClientIpRestoreTest extends UnitTestCase {
     }
 
     $request->overrideGlobals();
-    // @todo Update the constant to MAIN_REQUEST once support for Drupal 9 is dropped.
-    $cf_middleware->handle($request, HttpKernelInterface::MASTER_REQUEST);
+    $cf_middleware->handle($request);
     $this->assertEquals($expected_client_ip, $request->getClientIp());
   }
 

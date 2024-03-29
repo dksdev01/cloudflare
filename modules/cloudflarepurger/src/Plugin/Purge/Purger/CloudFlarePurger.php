@@ -6,16 +6,17 @@ use Cloudflare\API\Adapter\Guzzle;
 use Cloudflare\API\Auth\APIKey;
 use Cloudflare\API\Auth\APIToken;
 use Cloudflare\API\Endpoints\Zones;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
+use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflarepurger\EventSubscriber\CloudFlareCacheTagHeaderGenerator;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\purge\Plugin\Purge\Invalidation\InvalidationInterface;
 use Drupal\purge\Plugin\Purge\Purger\PurgerBase;
 use Drupal\purge\Plugin\Purge\Purger\PurgerInterface;
-use Drupal\purge\Plugin\Purge\Invalidation\InvalidationInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
+// cspell:ignore Depencies
 /**
  * CloudFlare purger.
  *
@@ -215,7 +216,7 @@ class CloudFlarePurger extends PurgerBase implements PurgerInterface {
         $purge_zone_urls = [];
         foreach ($zones as $zone) {
           foreach ($api_targets_to_purge as $item) {
-            // Check if URL item belongs to avaliable zone(s).
+            // Check if URL item belongs to available zone(s).
             // And group them based on their zone-ids.
             if (strpos($item, $zone->name) !== FALSE) {
               $purge_zone_urls[$zone->id][] = $item;

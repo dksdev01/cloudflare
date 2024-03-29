@@ -2,6 +2,7 @@
 
 namespace Drupal\cloudflare;
 
+// cspell:ignore timestamper
 use Drupal\Core\State\StateInterface;
 
 /**

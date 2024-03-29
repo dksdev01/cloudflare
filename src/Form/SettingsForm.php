@@ -2,24 +2,25 @@
 
 namespace Drupal\cloudflare\Form;
 
+// cspell:ignore e-mail
 use Cloudflare\API\Adapter\ResponseException;
+use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
+use Drupal\cloudflare\CloudFlareStateInterface;
+use Drupal\cloudflare\CloudFlareZoneInterface;
 use Drupal\Component\Utility\EmailValidator;
-use Egulias\EmailValidator\EmailValidator as EguliasEmailValidator;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\Config;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\cloudflare\CloudFlareStateInterface;
-use Drupal\cloudflare\CloudFlareZoneInterface;
-use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
+use Egulias\EmailValidator\EmailValidator as EguliasEmailValidator;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class SettingsForm.
+ * Settings form for CloudFlare module.
  *
  * @package Drupal\cloudflare\Form
  */
@@ -83,7 +84,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
     $has_composer_mock = $container->has('cloudflare.composer_dependency_checkmock');
 
     // Drupal\Component\Utility\EmailValidator introduced in 8.7.x. Adding
-    // condition here for backward combatilibilty.
+    // condition here for backward compatibility.
     // @see https://www.drupal.org/i/3038799
     if (class_exists('\Drupal\Component\Utility\EmailValidator')) {
       $email_validator = new EmailValidator();
@@ -364,7 +365,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
       }
       catch (ClientException $e) {
         if ($e->getResponse()->getStatusCode() === 403) {
-          $form_state->setErrorByName('apikey', $this->t($e->getMessage()));
+          $form_state->setErrorByName('apikey', $e->getMessage());
           return;
         }
         $form_state->setErrorByName('apikey', $this->t("An unknown error has occurred when attempting to connect to CloudFlare's API: @error", ['@error' => $e->getMessage()]));
@@ -439,7 +440,6 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
     $auth_using = trim($form_state->getValue('auth_using'));
     $zone_name = trim($form_state->getValue('zone_name'));
 
-    // Deslash the host URL.
     $bypass_host = trim(rtrim($form_state->getValue('bypass_host'), "/"));
     $client_ip_restore_enabled = $form_state->getValue('client_ip_restore_enabled');
     $remote_addr_validate = $form_state->getValue('remote_addr_validate');

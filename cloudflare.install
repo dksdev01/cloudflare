@@ -5,7 +5,11 @@
  * Install, update, and uninstall functions for the CloudFlare module.
  */
 
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Url;
+use Drupal\Core\Utility\UpdateException;
 
 /**
  * Implements hook_requirements().
@@ -48,10 +52,10 @@ function cloudflare_update_8001(&$sandbox) {
 function cloudflare_update_8002(&$sandbox) {
 
   try {
-    /* @var $user_role_storage \Drupal\user\RoleStorageInterface */
+    /** @var \Drupal\user\RoleStorageInterface $user_role_storage */
     $user_role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
 
-    /* @var $roles array|\Drupal\user\RoleInterface[] */
+    /** @var \Drupal\user\RoleInterface[] $roles */
     $roles = $user_role_storage->loadMultiple();
 
     foreach ($roles as $role) {
@@ -60,13 +64,13 @@ function cloudflare_update_8002(&$sandbox) {
       }
     }
   }
-  catch(EntityStorageException $e) {
+  catch (EntityStorageException $e) {
     throw new UpdateException('Update 8002 failed with the following: ' . $e->getMessage(), $e->getCode(), $e);
   }
-  catch(InvalidPluginDefinitionException $e) {
+  catch (InvalidPluginDefinitionException $e) {
     throw new UpdateException('Update 8002 failed with the following: ' . $e->getMessage(), $e->getCode(), $e);
   }
-  catch(PluginNotFoundException $e) {
+  catch (PluginNotFoundException $e) {
     throw new UpdateException('Update 8002 failed with the following: ' . $e->getMessage(), $e->getCode(), $e);
   }
 }

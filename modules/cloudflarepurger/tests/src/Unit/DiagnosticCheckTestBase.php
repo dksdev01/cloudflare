@@ -2,14 +2,12 @@
 
 namespace Drupal\Tests\cloudflarepurger\Unit;
 
-use Drupal\cloudflare\Timestamp;
-use Drupal\Tests\UnitTestCase;
-use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
-use Drupal\Core\Cache\MemoryBackend;
-use Drupal\Core\Lock\NullLockBackend;
-use Drupal\Core\State\State as CoreState;
 use Drupal\cloudflare\State as CloudFlareState;
+use Drupal\cloudflare\Timestamp;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
+use Drupal\Core\State\State as CoreState;
+use Drupal\Tests\UnitTestCase;
 
 /**
  * Tests that purge_requirements() passes on our diagnostic checks.
@@ -56,7 +54,7 @@ abstract class DiagnosticCheckTestBase extends UnitTestCase {
    */
   public function setUp(): void {
     parent::setUp();
-    $this->drupalState = new CoreState(new KeyValueMemoryFactory(), new MemoryBackend('test'), new NullLockBackend());
+    $this->drupalState = new CoreState(new KeyValueMemoryFactory());
     $this->timestampStub = new Timestamp();
     $this->cloudflareState = new CloudFlareState($this->drupalState, $this->timestampStub);
 

@@ -18,7 +18,7 @@
 - Head over to `/admin/config/development/performance/purge`
 - Click "Add purger" and select "CloudFlare".
 - Click "Add".
-- `drush cset system.performance cache.page.max_age 31536000` (year)
+- `drush config-set system.performance cache.page.max_age 31536000` (year)
 - Empty Varnish page cache if you have it.
 - Empty CloudFlare's cache.
 - Now you are ready to go!

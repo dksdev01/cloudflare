@@ -6,10 +6,10 @@ use Cloudflare\API\Adapter\Guzzle;
 use Cloudflare\API\Auth\APIKey;
 use Cloudflare\API\Auth\APIToken;
 use Cloudflare\API\Endpoints\Zones;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\cloudflare\Exception\ComposerDependencyException;
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use GuzzleHttp\Exception\ClientException;
 use Psr\Log\LoggerInterface;
 

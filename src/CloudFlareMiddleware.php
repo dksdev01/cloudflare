@@ -210,7 +210,7 @@ class CloudFlareMiddleware implements HttpKernelInterface {
       $cloudflare_ips = array_merge($iv4_endpoints, $iv6_endpoints);
       $cloudflare_ips = array_map('trim', $cloudflare_ips);
 
-      if (empty($cloudflare_ips)) {
+      if (count($cloudflare_ips) === 0) {
         $this->logger->error("Unable to get a listing of CloudFlare IPs.");
         return [];
       }
@@ -219,6 +219,7 @@ class CloudFlareMiddleware implements HttpKernelInterface {
     }
     catch (RequestException $exception) {
       $this->logger->error("Unable to get a listing of CloudFlare IPs. " . $exception->getMessage());
+      return [];
     }
   }
 
