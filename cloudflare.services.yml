@@ -26,5 +26,5 @@ services:
     class: Drupal\cloudflare\CloudFlareMiddleware
     arguments: ['@config.factory', '@cache.data', '@http_client', '@logger.channel.cloudflare']
     tags:
-      # Same priority as reverse proxy middleware (http_middleware.reverse_proxy).
-      - { name: http_middleware, priority: 300 }
+      # Must run before http_middleware.ajax_page_state
+      - { name: http_middleware, priority: 600 }
