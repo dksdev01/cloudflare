@@ -16,7 +16,7 @@
     "require": {
         "ext-json": "*",
         "cloudflare/sdk": "^1",
-        "drupal/ctools": "^3.0"
+        "drupal/ctools": "^3.0 || ^4.0"
     },
     "require-dev": {
         "drupal/purge": "^3.0"
