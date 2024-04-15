@@ -3,6 +3,7 @@
 namespace Drupal\cloudflarepurger\EventSubscriber;
 
 use Drupal\Core\Cache\CacheableResponseInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -21,13 +22,23 @@ class CloudFlareCacheTagHeaderGenerator implements EventSubscriberInterface {
   protected $limit;
 
   /**
+   * The config factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
    * Constructs a new CloudFlareCacheTagHeaderGenerator object.
    *
    * @param int $cloudflare_cache_tag_header_limit
    *   The CloudFlare Cache-Tag header limit in bytes.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The configuration factory.
    */
-  public function __construct($cloudflare_cache_tag_header_limit) {
+  public function __construct($cloudflare_cache_tag_header_limit, ConfigFactoryInterface $config_factory) {
     $this->limit = $cloudflare_cache_tag_header_limit;
+    $this->configFactory = $config_factory;
   }
 
   /**
@@ -62,6 +73,22 @@ class CloudFlareCacheTagHeaderGenerator implements EventSubscriberInterface {
     // Hash each cache tag to make the header fit, at the cost of potentially
     // invalidating too much (cfr. hash collisions).
     $cache_tags = explode(',', $cloudflare_cachetag_header_value);
+
+    // Remove any cache tags that are blacklisted.
+    $config = $this->configFactory->get('cloudflarepurger.settings');
+    $blacklist = $config->get('edge_cache_tag_header_blacklist');
+    $blacklist = is_array($blacklist) ? $blacklist : [];
+    if (!empty($blacklist)) {
+      $cache_tags = array_filter($cache_tags, function ($tag) use ($blacklist) {
+        foreach ($blacklist as $prefix) {
+          if (str_starts_with($tag, $prefix)) {
+            return FALSE;
+          }
+        }
+        return TRUE;
+      });
+    }
+
     $hashes = static::cacheTagsToHashes($cache_tags);
     $cloudflare_cachetag_header_value = implode(',', $hashes);
 
@@ -95,7 +122,7 @@ class CloudFlareCacheTagHeaderGenerator implements EventSubscriberInterface {
   public static function cacheTagsToHashes(array $cache_tags) {
     $hashes = [];
     foreach ($cache_tags as $cache_tag) {
-      $hashes[] = substr(md5($cache_tag), 0, 3);
+      $hashes[] = substr(base_convert(md5($cache_tag), 16, 36), 0, 4);
     }
     return $hashes;
   }
