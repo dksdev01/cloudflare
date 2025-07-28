@@ -31,7 +31,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class CloudFlarePurger extends PurgerBase implements PurgerInterface {
 
   // Max Number of tag purges.
-  public const MAX_TAG_PURGES_PER_REQUEST = 30;
+  // @see https://developers.cloudflare.com/cache/how-to/purge-cache/#hostname-tag-prefix-url-and-purge-everything-limits
+  public const MAX_TAG_PURGES_PER_REQUEST = 100;
 
   /**
    * The settings configuration.
