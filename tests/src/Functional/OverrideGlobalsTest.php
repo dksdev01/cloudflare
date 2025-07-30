@@ -7,7 +7,7 @@ use Drupal\Tests\BrowserTestBase;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Ensure middleware does not introduce a side effect
+ * Ensures middleware does not introduce a side effect.
  *
  * @group cloudflare
  */
@@ -52,6 +52,6 @@ class OverrideGlobalsTest extends BrowserTestBase {
 
     $expected = http_build_query(['ajax_page_state' => ['libraries' => $compressed_libraries]]);
     $this->assertEquals($expected, $request->server->get('QUERY_STRING'));
-
   }
+
 }
