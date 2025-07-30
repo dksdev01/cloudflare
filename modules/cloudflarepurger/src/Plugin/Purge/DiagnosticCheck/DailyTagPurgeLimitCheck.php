@@ -38,13 +38,6 @@ class DailyTagPurgeLimitCheck extends DiagnosticCheckBase implements DiagnosticC
   protected $state;
 
   /**
-   * Flag for if dependencies for CloudFlare are met.
-   *
-   * @var bool
-   */
-  protected $areCloudFlareComposerDependenciesMet;
-
-  /**
    * Constructs a DailyTagPurgeLimitCheck object.
    *
    * @param array $configuration
@@ -55,13 +48,10 @@ class DailyTagPurgeLimitCheck extends DiagnosticCheckBase implements DiagnosticC
    *   The plugin implementation definition.
    * @param \Drupal\cloudflare\CloudFlareStateInterface $state
    *   Tracks rate limits associated with CloudFlare Api.
-   * @param bool $composer_dependencies_met
-   *   Checks that the composer dependencies for CloudFlare are met.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, CloudFlareStateInterface $state, $composer_dependencies_met) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, CloudFlareStateInterface $state) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->state = $state;
-    $this->areCloudFlareComposerDependenciesMet = $composer_dependencies_met;
   }
 
   /**
@@ -73,7 +63,6 @@ class DailyTagPurgeLimitCheck extends DiagnosticCheckBase implements DiagnosticC
       $plugin_id,
       $plugin_definition,
       $container->get('cloudflare.state'),
-      $container->get('cloudflare.composer_dependency_check')->check()
     );
   }
 
@@ -81,10 +70,6 @@ class DailyTagPurgeLimitCheck extends DiagnosticCheckBase implements DiagnosticC
    * {@inheritdoc}
    */
   public function run() {
-    if (!$this->areCloudFlareComposerDependenciesMet) {
-      $this->recommendation = $this->t("Composer dependencies unmet.  Unable to assess API rate limits.");
-      return self::SEVERITY_ERROR;
-    }
     // Reset the daily count if this is a new day.
     $this->state->resetTagPurgeDailyCount();
 

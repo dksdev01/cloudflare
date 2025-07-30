@@ -4,7 +4,6 @@ namespace Drupal\cloudflare\Form;
 
 // cspell:ignore e-mail
 use Cloudflare\API\Adapter\ResponseException;
-use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
 use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareZoneInterface;
 use Drupal\Component\Utility\EmailValidator;
@@ -61,27 +60,12 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
   protected $state;
 
   /**
-   * Checks that the composer dependencies for CloudFlare are met.
-   *
-   * @var \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface
-   */
-  protected $cloudFlareComposerDependenciesCheck;
-
-  /**
-   * Boolean indicates if CloudFlare dependencies have been met.
-   *
-   * @var bool
-   */
-  protected $cloudFlareComposerDependenciesMet;
-
-  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
     // This is a hack because could not get custom ServiceProvider to work.
     // See: https://www.drupal.org/node/2026959
     $has_zone_mock = $container->has('cloudflare.zonemock');
-    $has_composer_mock = $container->has('cloudflare.composer_dependency_checkmock');
 
     // Drupal\Component\Utility\EmailValidator introduced in 8.7.x. Adding
     // condition here for backward compatibility.
@@ -97,8 +81,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
       $container->get('config.factory'),
       $container->get('cloudflare.state'),
       $has_zone_mock ? $container->get('cloudflare.zonemock') : $container->get('cloudflare.zone'),
-      $email_validator,
-      $has_composer_mock ? $container->get('cloudflare.composer_dependency_checkmock') : $container->get('cloudflare.composer_dependency_check')
+      $email_validator
     );
   }
 
@@ -113,16 +96,12 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
    *   ZoneApi instance for accessing api.
    * @param \Drupal\Component\Utility\EmailValidator|\Egulias\EmailValidator\EmailValidator $email_validator
    *   The email validator.
-   * @param \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface $check_interface
-   *   Checks if composer dependencies are met.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, CloudFlareStateInterface $state, CloudFlareZoneInterface $zone_api, $email_validator, CloudFlareComposerDependenciesCheckInterface $check_interface) {
+  public function __construct(ConfigFactoryInterface $config_factory, CloudFlareStateInterface $state, CloudFlareZoneInterface $zone_api, $email_validator) {
     $this->configFactory = $config_factory;
     $this->state = $state;
     $this->zoneApi = $zone_api;
     $this->emailValidator = $email_validator;
-    $this->cloudFlareComposerDependenciesCheck = $check_interface;
-    $this->cloudFlareComposerDependenciesMet = $check_interface->check();
   }
 
   /**
@@ -149,19 +128,6 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
     $form = array_merge($form, $this->buildApiCredentialsSection($config));
     $form = array_merge($form, $this->buildZoneSelectSection($config));
     $form = array_merge($form, $this->buildGeneralConfig($config));
-
-    // Form elements are being disabled after parent::buildForm because:
-    // 1: parent::buildForm creates the submit button
-    // 2: we want to disable the submit button since dependencies unmet.
-    if (!$this->cloudFlareComposerDependenciesMet) {
-      $this->messenger()->addError((CloudFlareComposerDependenciesCheckInterface::ERROR_MESSAGE));
-
-      $form['api_credentials_fieldset']['apikey']['#disabled'] = TRUE;
-      $form['api_credentials_fieldset']['email']['#disabled'] = TRUE;
-      $form['cloudflare_config']['client_ip_restore_enabled']['#disabled'] = TRUE;
-      $form['cloudflare_config']['bypass_host']['#disabled'] = TRUE;
-      $form['actions']['submit']['#disabled'] = TRUE;
-    }
 
     return $form;
   }
@@ -240,7 +206,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
     if (is_array($zone_ids) && !empty($zone_ids)) {
       // Get the zones.
       $zones = [];
-      if ($config->get('valid_credentials') === TRUE && $this->cloudFlareComposerDependenciesMet) {
+      if ($config->get('valid_credentials') === TRUE) {
         try {
           $zones = $this->zoneApi->listZones();
         }
@@ -361,7 +327,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
 
       try {
         // Confirm that the credentials can authenticate with the CloudFlareApi.
-        $this->zoneApi->assertValidCredentials($apikey, $email, $this->cloudFlareComposerDependenciesCheck, $this->state);
+        $this->zoneApi->assertValidCredentials($apikey, $email, $this->state);
       }
       catch (ClientException $e) {
         if ($e->getResponse()->getStatusCode() === 403) {
@@ -388,7 +354,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
           throw new \Exception('CloudFlare API Token field is empty!');
         }
         // Confirm that the credentials can authenticate with the CloudFlareApi.
-        $this->zoneApi->assertValidToken($token, $this->cloudFlareComposerDependenciesCheck, $this->state);
+        $this->zoneApi->assertValidToken($token, $this->state);
       }
       catch (ClientException $e) {
         if ($e->getResponse()->getStatusCode() === 403) {

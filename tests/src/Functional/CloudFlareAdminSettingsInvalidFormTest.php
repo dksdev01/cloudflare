@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\cloudflare\Functional;
 
-use Drupal\cloudflare_form_tester\Mocks\ComposerDependenciesCheckMock;
 use Drupal\cloudflare_form_tester\Mocks\ZoneMock;
 use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
@@ -55,7 +54,6 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
 
     $this->adminUser = $this->drupalCreateUser(['administer cloudflare']);
     $this->formUrl = Url::fromRoute($this->route);
-    ComposerDependenciesCheckMock::mockComposerDependenciesMet(TRUE);
   }
 
   /**
@@ -96,9 +94,8 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
     $config_factory = $container->get('config.factory');
     $logger_channel_cloudflare = $container->get('logger.channel.cloudflare');
     $cloudflare_state = $container->get('cloudflare.state');
-    $composer_dependencies_check = $container->get('cloudflare.composer_dependency_check');
 
-    $zone_mock = new ZoneMock($config_factory, $logger_channel_cloudflare, $cloudflare_state, $composer_dependencies_check);
+    $zone_mock = new ZoneMock($config_factory, $logger_channel_cloudflare, $cloudflare_state);
     ZoneMock::mockAssertValidCredentials(FALSE);
     $container->set('cloudflare.zone', $zone_mock);
 
@@ -150,7 +147,6 @@ class CloudFlareAdminSettingsInvalidFormTest extends BrowserTestBase {
    */
   public function testInvalidKeySpecialChars() {
     ZoneMock::mockAssertValidCredentials(TRUE);
-    ComposerDependenciesCheckMock::mockComposerDependenciesMet(FALSE);
     $edit = [
       // cspell:disable-next-line
       'apikey' => '!8ow48650j63zfzx1w9jd29cr367u0ezb6a4g',

@@ -3,7 +3,6 @@
 namespace Drupal\cloudflare_form_tester\Mocks;
 
 // cspell:ignore multizone singlezone
-use Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface;
 use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareZoneInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -52,22 +51,14 @@ class ZoneMock implements CloudFlareZoneInterface {
   protected $validCredentials;
 
   /**
-   * Checks that the composer dependencies for CloudFlare are met.
-   *
-   * @var \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface
-   */
-  protected $cloudFlareComposerDependenciesCheck;
-
-  /**
    * {@inheritdoc}
    */
-  public static function create(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CloudFlareStateInterface $state, CloudFlareComposerDependenciesCheckInterface $check_interface) {
+  public static function create(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CloudFlareStateInterface $state) {
 
     return new static(
       $config_factory,
       $logger,
-      $state,
-      $check_interface
+      $state
     );
   }
 
@@ -80,16 +71,13 @@ class ZoneMock implements CloudFlareZoneInterface {
    *   A logger instance.
    * @param \Drupal\cloudflare\CloudFlareStateInterface $state
    *   Tracks rate limits associated with CloudFlare Api.
-   * @param \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface $check_interface
-   *   Checks that composer dependencies are met.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CloudFlareStateInterface $state, CloudFlareComposerDependenciesCheckInterface $check_interface) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CloudFlareStateInterface $state) {
     $this->config = $config_factory->get('cloudflare.settings');
     $this->logger = $logger;
     $this->state = $state;
     $this->zone = $this->config->get('zone');
     $this->validCredentials = $this->config->get('valid_credentials');
-    $this->cloudFlareComposerDependenciesCheck = $check_interface;
   }
 
   /**
@@ -167,7 +155,7 @@ class ZoneMock implements CloudFlareZoneInterface {
   /**
    * {@inheritdoc}
    */
-  public static function assertValidToken($apitoken, CloudFlareComposerDependenciesCheckInterface $composer_dependency_check, CloudFlareStateInterface $state, $zone_name = '') {
+  public static function assertValidToken($apitoken, CloudFlareStateInterface $state, $zone_name = '') {
     $assert_valid_credentials = \Drupal::state()->get('cloudflaretesting.assetValidCredentials');
     if ($assert_valid_credentials != TRUE) {
       throw new \Exception("invalid", 1);
@@ -178,7 +166,7 @@ class ZoneMock implements CloudFlareZoneInterface {
   /**
    * {@inheritdoc}
    */
-  public static function assertValidCredentials($apikey, $email, CloudFlareComposerDependenciesCheckInterface $composer_dependency_check, CloudFlareStateInterface $state) {
+  public static function assertValidCredentials($apikey, $email, CloudFlareStateInterface $state) {
     $assert_valid_credentials = \Drupal::state()->get('cloudflaretesting.assetValidCredentials');
     if ($assert_valid_credentials != TRUE) {
       throw new \Exception("invalid", 1);

@@ -1,6 +1,5 @@
 apikey
 apitoken
-checkmock
 cloudflare_creds
 cloudflarepurger
 cloudflaretesting

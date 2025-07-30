@@ -50,13 +50,6 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
   protected $zones;
 
   /**
-   * Boolean indicates if CloudFlare dependencies have been met.
-   *
-   * @var bool
-   */
-  protected $cloudFlareComposerDependenciesMet;
-
-  /**
    * Tracks if the current CloudFlare account has multiple zones.
    *
    * @var bool
@@ -88,8 +81,7 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
     return new static(
       $container->get('config.factory'),
       $has_zone_mock ? $container->get('cloudflare.zonemock') : $container->get('cloudflare.zone'),
-      $container->get('logger.factory')->get('cloudflare'),
-      $container->get('cloudflare.composer_dependency_check')->check()
+      $container->get('logger.factory')->get('cloudflare')
     );
   }
 
@@ -102,21 +94,18 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
    *   ZoneApi instance for accessing api.
    * @param \Psr\Log\LoggerInterface $logger
    *   A logger instance.
-   * @param bool $composer_dependencies_met
-   *   Checks that the composer dependencies for CloudFlare are met.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, CloudFlareZoneInterface $zone_api, LoggerInterface $logger, $composer_dependencies_met) {
+  public function __construct(ConfigFactoryInterface $config_factory, CloudFlareZoneInterface $zone_api, LoggerInterface $logger) {
     $this->configFactory = $config_factory;
     $this->config = $config_factory->getEditable('cloudflare.settings');
     $this->zoneApi = $zone_api;
     $this->logger = $logger;
-    $this->cloudFlareComposerDependenciesMet = $composer_dependencies_met;
     $this->hasValidCredentials = $this->config->get('valid_credentials') === TRUE;
 
     // This test should be unnecessary since this form should only ever be
     // reached when the 2 conditions are met. It's being done from an abundance
     // of caution.
-    if ($this->hasValidCredentials && $this->cloudFlareComposerDependenciesMet) {
+    if ($this->hasValidCredentials) {
       try {
         $this->zones = $this->zoneApi->listZones();
         $this->hasMultipleZones = count($this->zones) > 1;

@@ -23,14 +23,12 @@ interface CloudFlareZoneInterface {
    *
    * @param string $api_token
    *   The secret Api token used to authenticate against CloudFlare.
-   * @param \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface $composer_dependency_check
-   *   Checks that composer dependencies are met.
    * @param \Drupal\cloudflare\CloudFlareStateInterface $state
    *   Tracks rate limits associated with CloudFlare Api.
    * @param string $zone_name
    *   Zone name to limit the results for.
    */
-  public static function assertValidToken($api_token, CloudFlareComposerDependenciesCheckInterface $composer_dependency_check, CloudFlareStateInterface $state, $zone_name);
+  public static function assertValidToken($api_token, CloudFlareStateInterface $state, $zone_name);
 
   /**
    * Asserts that credentials are valid. Does NOT pull settings from CMI.
@@ -39,8 +37,6 @@ interface CloudFlareZoneInterface {
    *   The secret Api key used to authenticate against CloudFlare.
    * @param string $email
    *   Email of the account used to authenticate against CloudFlare.
-   * @param \Drupal\cloudflare\CloudFlareComposerDependenciesCheckInterface $composer_dependency_check
-   *   Checks that composer dependencies are met.
    * @param \Drupal\cloudflare\CloudFlareStateInterface $state
    *   Tracks rate limits associated with CloudFlare Api.
    *
@@ -49,6 +45,6 @@ interface CloudFlareZoneInterface {
    * @throws \GuzzleHttp\Exception\RequestException
    *   Thrown if an unknown exception occurs when connecting to the Api.
    */
-  public static function assertValidCredentials($apikey, $email, CloudFlareComposerDependenciesCheckInterface $composer_dependency_check, CloudFlareStateInterface $state);
+  public static function assertValidCredentials($apikey, $email, CloudFlareStateInterface $state);
 
 }

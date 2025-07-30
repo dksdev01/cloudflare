@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\cloudflare\Functional;
 
-use Drupal\cloudflare_form_tester\Mocks\ComposerDependenciesCheckMock;
 use Drupal\cloudflare_form_tester\Mocks\ZoneMock;
 use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
@@ -56,7 +55,6 @@ class CloudFlareAdminSettingsFormTest extends BrowserTestBase {
     $this->formUrl = Url::fromRoute($this->route);
 
     ZoneMock::mockAssertValidCredentials(TRUE);
-    ComposerDependenciesCheckMock::mockComposerDependenciesMet(TRUE);
   }
 
   /**

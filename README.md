@@ -51,7 +51,7 @@ module has experimental support for Tags (it will still work with path based pur
 You will also need to update to the most recent version of the Purge module.
 
 ## Gotcha's, Disclaimers, & Technical Notes
-To read more about different details, and gotchas [read more here.](https://github.com/d8-contrib-modules/cloudflare/blob/8.x-1.x/docs/disclaimers.md)
+To read more about different details, and gotchas [read more here](docs/disclaimers.md).
 
 ## Running tests
 To run tests:
