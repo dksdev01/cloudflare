@@ -74,13 +74,13 @@ class CloudFlareCacheTagHeaderGenerator implements EventSubscriberInterface {
     // invalidating too much (cfr. hash collisions).
     $cache_tags = explode(',', $cloudflare_cachetag_header_value);
 
-    // Remove any cache tags that are blacklisted.
+    // Remove any cache tags which match prefixes from the exclude-list.
     $config = $this->configFactory->get('cloudflarepurger.settings');
-    $blacklist = $config->get('edge_cache_tag_header_blacklist');
-    $blacklist = is_array($blacklist) ? $blacklist : [];
-    if (!empty($blacklist)) {
-      $cache_tags = array_filter($cache_tags, function ($tag) use ($blacklist) {
-        foreach ($blacklist as $prefix) {
+    $excludelist = $config->get('cache_tag_excludelist');
+    $excludelist = is_array($excludelist) ? $excludelist : [];
+    if (!empty($excludelist)) {
+      $cache_tags = array_filter($cache_tags, function ($tag) use ($excludelist) {
+        foreach ($excludelist as $prefix) {
           if (str_starts_with($tag, $prefix)) {
             return FALSE;
           }

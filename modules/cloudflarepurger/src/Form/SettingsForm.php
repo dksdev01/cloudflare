@@ -31,13 +31,13 @@ class SettingsForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('cloudflarepurger.settings');
-    $blacklist = $config->get('edge_cache_tag_header_blacklist');
-    $blacklist = is_array($blacklist) ? implode(PHP_EOL, $blacklist) : '';
-    $form['cloudflare_config']['edge_cache_tag_header_blacklist'] = [
+    $excludelist = $config->get('cache_tag_excludelist');
+    $excludelist = is_array($excludelist) ? implode(PHP_EOL, $excludelist) : '';
+    $form['cloudflare_config']['cache_tag_excludelist'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Cache Tag Blacklist'),
-      '#default_value' =>  $blacklist,
-      '#description' => $this->t('List of tag prefixes to blacklist from the Edge-Cache-Tag header. One per line.'),
+      '#title' => $this->t('Cache tag exclude-list'),
+      '#default_value' => $excludelist,
+      '#description' => $this->t('List of tag prefixes to exclude from the "Cache-Tag" header. One per line.'),
     ];
     return parent::buildForm($form, $form_state);
   }
@@ -47,7 +47,7 @@ class SettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $formState) {
     $config = $this->configFactory()->getEditable('cloudflarepurger.settings');
-    $config->set('edge_cache_tag_header_blacklist', explode(PHP_EOL, $formState->getValue('edge_cache_tag_header_blacklist')));
+    $config->set('cache_tag_excludelist', explode(PHP_EOL, $formState->getValue('cache_tag_excludelist')));
     $config->save();
   }
 

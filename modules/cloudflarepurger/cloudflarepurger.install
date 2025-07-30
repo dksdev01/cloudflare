@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the Cloudflare purger module.
+ */
+
+// cspell:ignore blacklist
+
+/**
+ * Rename "edge_cache_tag_header_blacklist" to "cache_tag_excludelist".
+ */
+function cloudflarepurger_update_10001() {
+  $config = \Drupal::configFactory()->getEditable('cloudflarepurger.settings');
+  $excludelist = $config->get('edge_cache_tag_header_blacklist');
+  $config
+    ->set('cache_tag_excludelist', $excludelist)
+    ->clear('edge_cache_tag_header_blacklist')
+    ->save(TRUE);
+
+  return 'Cloudflare purger configuration ( cloudflarepurger.settings ) was successfully updated.';
+}
