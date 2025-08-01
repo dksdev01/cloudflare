@@ -142,7 +142,7 @@ class Zone implements CloudFlareZoneInterface {
           $zones = array_merge($zones, $results->result);
         }
 
-        $this->cache->set($cid, $zones, time() + 60 * 5, ['cloudflare_zone']);
+        $this->cache->set($cid, $zones, time() + 60 * 5, ['config:cloudflare.settings']);
       }
     }
     catch (ClientException $e) {
