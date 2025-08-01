@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - #3352408 - code style issues
 - #3538475 - issues highlighted by the CSpell
 - #3136941 - licence identifier in the `composer.json`
+- #3536140 - Endless loop when retrieving zones across multiple pages
 
 ### Removed
 - Bleeding edge PHPStan configuration - we are not ready of it

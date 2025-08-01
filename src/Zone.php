@@ -134,16 +134,12 @@ class Zone implements CloudFlareZoneInterface {
       }
 
       else {
-        $next_page = 0;
-        $total_pages = 1;
-
-        while ($next_page < $total_pages) {
-          $this->zoneName = !empty($this->zoneName) ? $this->zoneName : '';
-          $results = $this->zoneApi->listZones($this->zoneName, '', $next_page);
+        $page = 0;
+        $results = $this->zoneApi->listZones($this->zoneName, '', $page);
+        while (count($zones) < $results->result_info->total_count) {
+          $page++;
+          $results = $this->zoneApi->listZones($this->zoneName, '', $page);
           $zones = array_merge($zones, $results->result);
-          $this->state->incrementApiRateCount();
-          $total_pages = $results->result_info->total_pages;
-          $next_page = $results->result_info->page;
         }
 
         $this->cache->set($cid, $zones, time() + 60 * 5, ['cloudflare_zone']);
