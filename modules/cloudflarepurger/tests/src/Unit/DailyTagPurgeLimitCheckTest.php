@@ -25,9 +25,9 @@ class DailyTagPurgeLimitCheckTest extends DiagnosticCheckTestBase {
    */
   public function testDailyTagPurgeLimitCheck($api_rate, $expected_severity) {
     $this->drupalState->set(State::TAG_PURGE_DAILY_COUNT, $api_rate);
-    $this->drupalState->set(State::TAG_PURGE_DAILY_COUNT_START, new \DateTime());
+    $this->drupalState->set(State::TAG_PURGE_DAILY_COUNT_START, \time());
 
-    $api_rate_limit_check = new DailyTagPurgeLimitCheck([], '23123', 'this is a definition', $this->cloudflareState, TRUE);
+    $api_rate_limit_check = new DailyTagPurgeLimitCheck([], '23123', 'this is a definition', $this->cloudflareState);
     $actual_severity = $api_rate_limit_check->run();
     $this->assertEquals($expected_severity, $actual_severity);
   }
@@ -40,7 +40,7 @@ class DailyTagPurgeLimitCheckTest extends DiagnosticCheckTestBase {
    *     - count of daily tag purge requests
    *     - expected status returned by diagnostic check
    */
-  public function dailyTagPurgeLimitCheckProvider() {
+  public static function dailyTagPurgeLimitCheckProvider() {
     return [
       [NULL, DiagnosticCheckInterface::SEVERITY_OK],
       [0, DiagnosticCheckInterface::SEVERITY_OK],

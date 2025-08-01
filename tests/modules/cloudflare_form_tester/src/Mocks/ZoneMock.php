@@ -5,6 +5,7 @@ namespace Drupal\cloudflare_form_tester\Mocks;
 // cspell:ignore multizone singlezone
 use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\CloudFlareZoneInterface;
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Psr\Log\LoggerInterface;
@@ -53,26 +54,21 @@ class ZoneMock implements CloudFlareZoneInterface {
   /**
    * {@inheritdoc}
    */
-  public static function create(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CloudFlareStateInterface $state) {
+  public static function create(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CacheBackendInterface $cache, CloudFlareStateInterface $state) {
 
     return new static(
       $config_factory,
       $logger,
-      $state
+      $cache,
+      $state,
+      NULL
     );
   }
 
   /**
-   * Zone constructor.
-   *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The config factory.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger instance.
-   * @param \Drupal\cloudflare\CloudFlareStateInterface $state
-   *   Tracks rate limits associated with CloudFlare Api.
+   * {@inheritdoc}
    */
-  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CloudFlareStateInterface $state) {
+  public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CacheBackendInterface $cache, CloudFlareStateInterface $state, $zone_api) {
     $this->config = $config_factory->get('cloudflare.settings');
     $this->logger = $logger;
     $this->state = $state;
@@ -155,7 +151,7 @@ class ZoneMock implements CloudFlareZoneInterface {
   /**
    * {@inheritdoc}
    */
-  public static function assertValidToken($apitoken, CloudFlareStateInterface $state, $zone_name = '') {
+  public static function assertValidToken(string $api_token, CloudFlareStateInterface $state, string $zone_name = '') {
     $assert_valid_credentials = \Drupal::state()->get('cloudflaretesting.assetValidCredentials');
     if ($assert_valid_credentials != TRUE) {
       throw new \Exception("invalid", 1);

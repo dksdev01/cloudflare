@@ -90,7 +90,7 @@ class ApiRateLimitCheck extends DiagnosticCheckBase implements DiagnosticCheckIn
       return self::SEVERITY_WARNING;
     }
 
-    elseif ($rate_count < $daily_warning_level) {
+    else {
       $this->recommendation = $this->t('Site is safely below ( @rate_count ) the rate limit of @rate_limit every 5 minutes.', $message_variables);
       return self::SEVERITY_OK;
     }

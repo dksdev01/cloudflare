@@ -30,10 +30,10 @@ class CredentialTestCheckTest extends DiagnosticCheckTestBase {
     $config->expects($this->atLeastOnce())
       ->method('get')
       ->with('valid_credentials')
-      ->will($this->returnValue($cred_status));
+      ->willReturn($cred_status);
     $config_factory->expects($this->once())
       ->method('get')
-      ->will($this->returnValue($config));
+      ->willReturn($config);
 
     $credential_check = new CredentialCheck([], '23123', 'this is a definition', $config_factory);
     $actual_severity = $credential_check->run();
@@ -43,7 +43,7 @@ class CredentialTestCheckTest extends DiagnosticCheckTestBase {
   /**
    * PhpUnit provider to api rate limits.
    */
-  public function credentialCheckProvider() {
+  public static function credentialCheckProvider() {
     return [
       [NULL, DiagnosticCheckInterface::SEVERITY_ERROR],
       [TRUE, DiagnosticCheckInterface::SEVERITY_OK],

@@ -42,7 +42,7 @@ class ApiRateLimitCheckTest extends DiagnosticCheckTestBase {
    *     - count of daily tag purge requests
    *     - expected status returned by diagnostic check
    */
-  public function apiRateLimitProvider() {
+  public static function apiRateLimitProvider() {
     return [
       [NULL, DiagnosticCheckInterface::SEVERITY_OK],
       [0, DiagnosticCheckInterface::SEVERITY_OK],

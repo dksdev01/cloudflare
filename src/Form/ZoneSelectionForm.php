@@ -74,13 +74,9 @@ class ZoneSelectionForm extends FormBase implements ContainerInjectionInterface 
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    // This is a hack because could not get custom ServiceProvider to work.
-    // this to work: https://www.drupal.org/node/2026959
-    $has_zone_mock = $container->has('cloudflare.zonemock');
-
     return new static(
       $container->get('config.factory'),
-      $has_zone_mock ? $container->get('cloudflare.zonemock') : $container->get('cloudflare.zone'),
+      $container->get('cloudflare.zone'),
       $container->get('logger.factory')->get('cloudflare')
     );
   }

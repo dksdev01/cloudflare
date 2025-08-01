@@ -5,7 +5,9 @@
  * Install, update, and uninstall functions for the Cloudflare purger module.
  */
 
+// phpcs:disable DrupalPractice.Commenting.CommentEmptyLine.SpacingAfter
 // cspell:ignore blacklist
+// phpcs:enable
 
 /**
  * Rename "edge_cache_tag_header_blacklist" to "cache_tag_excludelist".

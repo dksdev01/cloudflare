@@ -13,7 +13,6 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Egulias\EmailValidator\EmailValidator as EguliasEmailValidator;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -34,9 +33,9 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
   /**
    * Email validator class.
    *
-   * @var \Drupal\Component\Utility\EmailValidator|\Egulias\EmailValidator\EmailValidator
+   * @var \Drupal\Component\Utility\EmailValidator
    */
-  protected $emailValidator;
+  protected EmailValidator $emailValidator;
 
   /**
    * Wrapper to access the CloudFlare zone api.
@@ -63,25 +62,11 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    // This is a hack because could not get custom ServiceProvider to work.
-    // See: https://www.drupal.org/node/2026959
-    $has_zone_mock = $container->has('cloudflare.zonemock');
-
-    // Drupal\Component\Utility\EmailValidator introduced in 8.7.x. Adding
-    // condition here for backward compatibility.
-    // @see https://www.drupal.org/i/3038799
-    if (class_exists('\Drupal\Component\Utility\EmailValidator')) {
-      $email_validator = new EmailValidator();
-    }
-    else {
-      $email_validator = new EguliasEmailValidator();
-    }
-
     return new static(
       $container->get('config.factory'),
       $container->get('cloudflare.state'),
-      $has_zone_mock ? $container->get('cloudflare.zonemock') : $container->get('cloudflare.zone'),
-      $email_validator
+      $container->get('cloudflare.zone'),
+      new EmailValidator()
     );
   }
 
@@ -94,7 +79,7 @@ class SettingsForm extends FormBase implements ContainerInjectionInterface {
    *   Tracks rate limits associated with CloudFlare API.
    * @param \Drupal\cloudflare\CloudFlareZoneInterface $zone_api
    *   ZoneApi instance for accessing api.
-   * @param \Drupal\Component\Utility\EmailValidator|\Egulias\EmailValidator\EmailValidator $email_validator
+   * @param \Drupal\Component\Utility\EmailValidator $email_validator
    *   The email validator.
    */
   public function __construct(ConfigFactoryInterface $config_factory, CloudFlareStateInterface $state, CloudFlareZoneInterface $zone_api, $email_validator) {

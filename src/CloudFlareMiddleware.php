@@ -6,7 +6,6 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\Core\Url;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Log\LoggerInterface;
@@ -137,8 +136,7 @@ class CloudFlareMiddleware implements HttpKernelInterface {
     }
 
     if (!$has_http_cf_connecting_ip) {
-      $message = $this->t("Request came through without being routed through CloudFlare.");
-      $this->logger->warning($message);
+      $this->logger->warning('Request came through without being routed through CloudFlare.');
       return $this->httpKernel->handle($request, $type, $catch);
     }
 
@@ -147,18 +145,19 @@ class CloudFlareMiddleware implements HttpKernelInterface {
     // Some environments may make the alteration for us. In which case no
     // action is required.
     if ($has_ip_already_changed) {
-      $url_to_settings = Url::fromRoute('cloudflare.admin_settings_form');
-      $link_to_settings = $url_to_settings->getInternalPath();
-      $message = $this->t('Request has already been updated.  This functionality should be deactivated. Please go <a href="@link_to_settings">here</a> to disable "Restore Client Ip Address".', ['@link_to_settings' => $link_to_settings]);
-      $this->logger->warning($message);
+      // We are using hard coded URI instead of the settings form route name
+      // here to avoid triggering URL generation,
+      // like "Url::fromRoute('cloudflare.admin_settings_form')", and keep
+      // the footprint light.
+      $this->logger->warning('Request has already been updated. This functionality should be deactivated. Please navigate to the <a href="/admin/config/services/cloudflare">settings form</a> to disable "Restore Client Ip Address".');
       return $this->httpKernel->handle($request, $type, $catch);
     }
 
     $cloudflare_ipranges = $this->getCloudFlareIpRanges();
     $request_originating_from_cloudflare = IpUtils::checkIp($client_ip, $cloudflare_ipranges);
 
-    if ($remoteAddrValidate && $has_http_cf_connecting_ip && !$request_originating_from_cloudflare) {
-      $message = $this->t("Client IP of @client_ip does not match a known CloudFlare IP but there is HTTP_CF_CONNECTING_IP of @cf_connecting_ip.", [
+    if ($remoteAddrValidate && !$request_originating_from_cloudflare) {
+      $message = \strtr("Client IP of @client_ip does not match a known CloudFlare IP but there is HTTP_CF_CONNECTING_IP of @cf_connecting_ip.", [
         '@cf_connecting_ip' => $cf_connecting_ip,
         '@client_ip' => $client_ip,
       ]);

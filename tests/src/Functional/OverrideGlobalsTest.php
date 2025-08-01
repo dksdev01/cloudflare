@@ -21,8 +21,13 @@ class OverrideGlobalsTest extends BrowserTestBase {
 
   /**
    * {@inheritdoc}
+   *
+   * Must be a theme with a library that can be used in the test. Otherwise,
+   * Drupal tries to get library info by extension name which triggers a warning
+   * "Warning: The following theme is missing from the file system: foo in
+   * web/core/lib/Drupal/Core/Extension/ExtensionPathResolver.php on line 63"
    */
-  protected $defaultTheme = 'stark';
+  protected $defaultTheme = 'stable9';
 
   /**
    * {@inheritdoc}
@@ -45,7 +50,7 @@ class OverrideGlobalsTest extends BrowserTestBase {
     $request = Request::create('/');
     $request->server->set('HTTP_CF_CONNECTING_IP', '1.1.1.1');
     // Pass the AJAX page state to the request.
-    $compressed_libraries = UrlHelper::compressQueryParameter('foo/bar,bar/zip');
+    $compressed_libraries = UrlHelper::compressQueryParameter('stable9/normalize');
     $request->query->set('ajax_page_state', ['libraries' => $compressed_libraries]);
 
     $http_kernel->handle($request);

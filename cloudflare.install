@@ -5,6 +5,7 @@
  * Install, update, and uninstall functions for the CloudFlare module.
  */
 
+use Drupal\cloudflare\State;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\EntityStorageException;
@@ -104,4 +105,19 @@ function cloudflare_update_8005() {
   \Drupal::configFactory()->getEditable('cloudflare.settings')->set('remote_addr_validate', TRUE)->save();
 
   return 'Cloudflare configuration ( cloudflare.settings ) was successfully updated.';
+}
+
+/**
+ * Replace DateTime objects with timestamps.
+ */
+function cloudflare_update_10001() {
+  $state = \Drupal::state();
+  foreach ([State::TAG_PURGE_DAILY_COUNT_START, State::API_RATE_COUNT_START] as $item) {
+    $date = $state->get($item);
+    if ($date && is_a($date, 'DateTime')) {
+      $state->set($item, $date->getTimestamp());
+    }
+  }
+
+  return 'Cloudflare state data was successfully updated.';
 }

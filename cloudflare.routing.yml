@@ -1,4 +1,6 @@
 cloudflare.admin_settings_form:
+  # If the path here must be changed, change it in the middleware.
+  # See the message inside the "if ($has_ip_already_changed)" clause.
   path: '/admin/config/services/cloudflare'
   defaults:
     _wizard: '\Drupal\cloudflare\Wizard\ConfigWizard'

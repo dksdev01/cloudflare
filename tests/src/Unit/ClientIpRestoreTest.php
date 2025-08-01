@@ -4,6 +4,7 @@ namespace Drupal\Tests\cloudflare\Unit;
 
 // cspell:ignore cftest
 use Drupal\cloudflare\CloudFlareMiddleware;
+use Drupal\Component\Datetime\Time;
 use Drupal\Core\Cache\MemoryBackend;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -108,11 +109,11 @@ class ClientIpRestoreTest extends UnitTestCase {
     ];
     $config->expects($this->atLeastOnce())
       ->method('get')
-      ->will($this->returnValueMap($map));
+      ->willReturnMap($map);
 
     $config_factory->expects($this->once())
       ->method('get')
-      ->will($this->returnValue($config));
+      ->willReturn($config);
 
     $cf_ips = explode("\n",
       "103.21.244.0/22
@@ -132,7 +133,7 @@ class ClientIpRestoreTest extends UnitTestCase {
     );
     $cf_ips = array_map('trim', $cf_ips);
 
-    $cache_backend = new MemoryBackend();
+    $cache_backend = new MemoryBackend(new Time());
     $cache_backend->set(CloudFlareMiddleware::CLOUDFLARE_RANGE_KEY, $cf_ips);
     $kernel = $this->createMock('Symfony\Component\HttpKernel\HttpKernelInterface');
 
@@ -167,17 +168,12 @@ class ClientIpRestoreTest extends UnitTestCase {
    * Provider for testing testEnabledClientIpRestoreProvider.
    *
    * @return array
-   *   Test Data to simulate incoming request and the expected results..
+   *   Test Data to simulate incoming request and the expected results.
    */
-  public function requestProvider() {
-    // The setup container is not yet available.
-    $this->container = new ContainerBuilder();
-    $this->container->set('string_translation', $this->getStringTranslationStub());
-    \Drupal::setContainer($this->container);
-
-    $message0 = $this->t('Request came through without being routed through CloudFlare.');
-    $message1 = $this->t("Client IP of 192.168.2.203 does not match a known CloudFlare IP but there is HTTP_CF_CONNECTING_IP of 103.21.244.0.");
-    $message2 = $this->t('Request has already been updated.  This functionality should be deactivated. Please go <a href="@link_to_settings">here</a> to disable "Restore Client Ip Address".', ['@link_to_settings' => "/admin/config/services/cloudflare"]);
+  public static function requestProvider(): array {
+    $message0 = 'Request came through without being routed through CloudFlare.';
+    $message1 = 'Client IP of 192.168.2.203 does not match a known CloudFlare IP but there is HTTP_CF_CONNECTING_IP of 103.21.244.0.';
+    $message2 = 'Request has already been updated. This functionality should be deactivated. Please navigate to the <a href="/admin/config/services/cloudflare">settings form</a> to disable "Restore Client Ip Address".';
 
     $test0 = [
       FALSE,

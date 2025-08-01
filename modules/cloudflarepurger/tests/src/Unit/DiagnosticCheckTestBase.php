@@ -2,11 +2,15 @@
 
 namespace Drupal\Tests\cloudflarepurger\Unit;
 
+use Drupal\cloudflare\CloudFlareStateInterface;
 use Drupal\cloudflare\State as CloudFlareState;
-use Drupal\cloudflare\Timestamp;
+use Drupal\Component\Datetime\Time;
+use Drupal\Core\Cache\NullBackend;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
+use Drupal\Core\Lock\NullLockBackend;
 use Drupal\Core\State\State as CoreState;
+use Drupal\Core\State\StateInterface;
 use Drupal\Tests\UnitTestCase;
 
 /**
@@ -24,32 +28,24 @@ abstract class DiagnosticCheckTestBase extends UnitTestCase {
   /**
    * Tracks Drupal states.
    *
-   * @var \Drupal\Core\state\StateInterface
+   * @var \Drupal\Core\State\StateInterface
    */
-  protected $drupalState;
+  protected StateInterface $drupalState;
 
   /**
    * Tracks rate limits associated with CloudFlare Api.
    *
    * @var \Drupal\cloudflare\CloudFlareStateInterface
    */
-  protected $cloudflareState;
-
-  /**
-   * Provides timestamps.
-   *
-   * @var \Drupal\cloudflare\Timestamp
-   */
-  protected $timestampStub;
+  protected CloudFlareStateInterface $cloudflareState;
 
   /**
    * {@inheritdoc}
    */
   public function setUp(): void {
     parent::setUp();
-    $this->drupalState = new CoreState(new KeyValueMemoryFactory());
-    $this->timestampStub = new Timestamp();
-    $this->cloudflareState = new CloudFlareState($this->drupalState, $this->timestampStub);
+    $this->drupalState = new CoreState(new KeyValueMemoryFactory(), new NullBackend('state'), new NullLockBackend());
+    $this->cloudflareState = new CloudFlareState($this->drupalState, new Time());
 
     $this->container = new ContainerBuilder();
     $this->container->set('string_translation', $this->getStringTranslationStub());

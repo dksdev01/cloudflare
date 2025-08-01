@@ -95,7 +95,7 @@ class DailyTagPurgeLimitCheck extends DiagnosticCheckBase implements DiagnosticC
       return self::SEVERITY_WARNING;
     }
 
-    elseif ($daily_count < $daily_warning_level) {
+    else {
       $this->recommendation = $this->t('Site is safely below the daily limit of :daily_limit tag purges/day.', $message_variables);
       return self::SEVERITY_OK;
     }

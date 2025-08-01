@@ -108,18 +108,7 @@ class Zone implements CloudFlareZoneInterface {
   }
 
   /**
-   * Zone constructor.
-   *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The configuration factory.
-   * @param \Psr\Log\LoggerInterface $logger
-   *   A logger instance.
-   * @param \Drupal\Core\Cache\CacheBackendInterface $cache
-   *   The cache backend.
-   * @param \Drupal\cloudflare\CloudFlareStateInterface $state
-   *   Tracks rate limits associated with CloudFlare Api.
-   * @param \Cloudflare\API\Endpoints\Zones|null $zone_api
-   *   ZoneApi instance for accessing api.
+   * {@inheritdoc}
    */
   public function __construct(ConfigFactoryInterface $config_factory, LoggerInterface $logger, CacheBackendInterface $cache, CloudFlareStateInterface $state, $zone_api) {
     $this->config = $config_factory->get('cloudflare.settings');
@@ -170,8 +159,8 @@ class Zone implements CloudFlareZoneInterface {
   /**
    * {@inheritdoc}
    */
-  public static function assertValidToken($apitoken, CloudFlareStateInterface $state, $zone_name = '') {
-    $key = new APIToken($apitoken);
+  public static function assertValidToken(string $api_token, CloudFlareStateInterface $state, string $zone_name = '') {
+    $key = new APIToken($api_token);
     $adapter = new Guzzle($key);
     $zone_api_direct = new Zones($adapter);
 

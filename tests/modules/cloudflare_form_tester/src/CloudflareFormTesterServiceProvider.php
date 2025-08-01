@@ -14,9 +14,11 @@ class CloudflareFormTesterServiceProvider extends ServiceProviderBase {
    * {@inheritdoc}
    */
   public function alter(ContainerBuilder $container) {
-    // Overrides language_manager class to test domain language negotiation.
-    $definition = $container->getDefinition('cloudflare.zone');
-    $definition->setClass('Drupal\cloudflare_form_tester\Mocks\ZoneMock');
+    if ($container->hasDefinition('cloudflare.zone')) {
+      $definition = $container->getDefinition('cloudflare.zone');
+      $definition->setClass('Drupal\cloudflare_form_tester\Mocks\ZoneMock');
+      $definition->setFactory('Drupal\cloudflare_form_tester\Mocks\ZoneMock::create');
+    }
   }
 
 }

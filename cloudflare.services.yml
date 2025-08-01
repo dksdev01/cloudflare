@@ -1,9 +1,7 @@
 services:
-  cloudflare.timestamp:
-    class: Drupal\cloudflare\Timestamp
   cloudflare.state:
     class: Drupal\cloudflare\State
-    arguments: ['@state', '@cloudflare.timestamp']
+    arguments: ['@state', '@datetime.time']
     tags:
       - { name: cloudflare}
   cloudflare.zone:

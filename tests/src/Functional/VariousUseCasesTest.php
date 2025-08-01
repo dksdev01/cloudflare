@@ -59,6 +59,7 @@ class VariousUseCasesTest extends BrowserTestBase {
    * between CloudFlare and the origin server.
    */
   public function testAuthenticationSupport() {
+    $this->assertEmpty($this->loggedInUser);
     $this->assertTrue($this->config('cloudflare.settings')->get('client_ip_restore_enabled'), 'Restore client IP address function is enabled');
     $this->assertFalse($this->config('cloudflare.settings')->get('remote_addr_validate'), 'Validation of remote IP address is disabled');
 
@@ -66,7 +67,6 @@ class VariousUseCasesTest extends BrowserTestBase {
     $guzzle_cookie_jar = $this->getGuzzleCookieJar();
     $post = [
       'form_id' => 'user_login_form',
-      'form_build_id' => $this->getUserLoginFormBuildId(),
       'name' => $account->getAccountName(),
       'pass' => $account->passRaw,
       'op' => 'Log in',
@@ -92,7 +92,7 @@ class VariousUseCasesTest extends BrowserTestBase {
     ]);
 
     $this->assertEquals(303, $response->getStatusCode(), 'User is redirected to the profile page');
-    $this->assertStringStartsWith('https', $response->getHeader('location')[0], 'Location header contains expected HTTPS scheme');
+    $this->assertStringStartsWith('https://', $response->getHeader('location')[0], 'Location header contains expected HTTPS scheme');
 
     $cookie = $guzzle_cookie_jar->getCookieByName($this->secureSessionName);
     $this->assertTrue(is_a($cookie, 'GuzzleHttp\Cookie\SetCookie'), 'The secure cookie exists');
@@ -111,17 +111,6 @@ class VariousUseCasesTest extends BrowserTestBase {
       $cookies[$cookie_name] = $values[0];
     }
     return CookieJar::fromArray($cookies, $this->baseUrl);
-  }
-
-  /**
-   * Gets the form build ID for the user login form.
-   *
-   * @return string
-   *   The form build ID for the user login form.
-   */
-  protected function getUserLoginFormBuildId(): string {
-    $this->drupalGet('user/login');
-    return (string) $this->getSession()->getPage()->findField('form_build_id');
   }
 
   /**
