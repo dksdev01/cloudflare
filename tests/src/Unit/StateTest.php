@@ -170,7 +170,7 @@ class StateTest extends UnitTestCase {
   /**
    * Sets up Cloudflare state for testing.
    *
-   * @param int[] $timestamps
+   * @param array<int, int> $timestamps
    *   Set of timestamps for use in the Cloudflare state service.
    *
    * @return \Drupal\cloudflare\State

@@ -66,14 +66,6 @@ class CloudFlareCacheTagHeaderGenerator implements EventSubscriberInterface {
       return;
     }
 
-    $response = $event->getResponse();
-
-    $cloudflare_cachetag_header_value = static::drupalCacheTagsToCloudFlareCacheTag($cache_tags);
-
-    // Hash each cache tag to make the header fit, at the cost of potentially
-    // invalidating too much (cfr. hash collisions).
-    $cache_tags = explode(',', $cloudflare_cachetag_header_value);
-
     // Remove any cache tags which match prefixes from the exclude-list.
     $config = $this->configFactory->get('cloudflarepurger.settings');
     $excludelist = $config->get('cache_tag_excludelist');
@@ -89,23 +81,12 @@ class CloudFlareCacheTagHeaderGenerator implements EventSubscriberInterface {
       });
     }
 
+    // Hash each cache tag to make the header fit, at the cost of potentially
+    // invalidating too much (cfr. hash collisions).
     $hashes = static::cacheTagsToHashes($cache_tags);
     $cloudflare_cachetag_header_value = implode(',', $hashes);
 
     $response->headers->set('Cache-Tag', $cloudflare_cachetag_header_value);
-  }
-
-  /**
-   * Maps a Drupal X-Drupal-Cache-Tags header to a CloudFlare Cache-Tag header.
-   *
-   * @param string $drupal_cache_tags
-   *   A X-Drupal-Cache-Tags header value, which has space-separated cache tags.
-   *
-   * @return string
-   *   A CloudFlare Cache-Tag header, which has comma-separated cache tags.
-   */
-  protected static function drupalCacheTagsToCloudFlareCacheTag($drupal_cache_tags) {
-    return implode(',', $drupal_cache_tags);
   }
 
   /**
