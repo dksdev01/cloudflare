@@ -47,7 +47,11 @@ class SettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $formState) {
     $config = $this->configFactory()->getEditable('cloudflarepurger.settings');
-    $config->set('cache_tag_excludelist', explode(PHP_EOL, $formState->getValue('cache_tag_excludelist')));
+    $exclude_list = explode(PHP_EOL, $formState->getValue('cache_tag_excludelist'));
+    // Trim the list to avoid white space and
+    // filter out empty elements
+    // and take only values to avoid numeric indexes in the exported config.
+    $config->set('cache_tag_excludelist', array_values(array_filter(array_map('trim', $exclude_list))));
     $config->save();
   }
 
