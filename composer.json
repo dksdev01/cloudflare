@@ -1,5 +1,5 @@
 {
-    "name": "drupal/cloudflare",
+    "name": "dksdev01/cloudflare",
     "type": "drupal-module",
     "description": "Drupal module for interacting with CloudFlare's SDK. CloudFlare is a copyright of CloudFlare, Inc.  The authors of this tool has no association with CloudFlare, Inc.",
     "keywords": ["Drupal", "CloudFlare", "Cloud Flare", "CDN"],
@@ -15,7 +15,7 @@
     },
     "require": {
         "ext-json": "*",
-        "cloudflare/sdk": "^1",
+        "dksdev01/cloudflare-sdk": "dev-master",
         "drupal/ctools": "^3.0 || ^4.0"
     },
     "require-dev": {
