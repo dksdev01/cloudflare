@@ -64,8 +64,11 @@ class State implements CloudFlareStateInterface {
     $format = 'Y-m-d';
     $now = $this->time->getCurrentTime();
     $todays_date = DateTimePlus::createFromTimestamp($now)->format($format);
-    $last_recorded_date = DateTimePlus::createFromTimestamp($last_recorded_timestamp)->format($format);
+    if (!empty($last_recorded_timestamp) && is_object($last_recorded_timestamp)) {
+      $last_recorded_timestamp = $last_recorded_timestamp->getTimestamp();
+    }
 
+    $last_recorded_date = DateTimePlus::createFromTimestamp($last_recorded_timestamp)->format($format);
     if (empty($last_recorded_timestamp) || ($last_recorded_date != $todays_date)) {
       $this->state->set(self::TAG_PURGE_DAILY_COUNT, 1);
       $this->state->set(self::TAG_PURGE_DAILY_COUNT_START, $now);
@@ -87,6 +90,10 @@ class State implements CloudFlareStateInterface {
     $last_recorded_timestamp = $this->state->get(self::API_RATE_COUNT_START);
     if (is_null($last_recorded_timestamp)) {
       $last_recorded_timestamp = (new \DateTime('2001-01-01'))->getTimestamp();
+    }
+
+    if (!empty($last_recorded_timestamp) && is_object($last_recorded_timestamp)) {
+      $last_recorded_timestamp = $last_recorded_timestamp->getTimestamp();
     }
 
     $now = $this->time->getCurrentTime();
